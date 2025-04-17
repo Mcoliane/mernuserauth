@@ -5,6 +5,8 @@ import Login from './components/Login';
 import ProtectedPage from './components/ProtectedPage';
 import LogoutButton from './components/LogoutButton';
 import NavComp from './components/Nav';
+import ChessBoard from "./components/Chess";
+import Chat from "./components/ChatBot";
 import { HeroUIProvider } from "@heroui/react";
 
 function App() {
@@ -13,11 +15,12 @@ function App() {
             <Router>
                     <div className="min-h-screen min-w-screen bg-white text-black">
                         <NavComp />
-                        <main className="flex min-w-screen min-h-screen">
+
                             <Routes>
                                 <Route path="/register" element={<Register />} />
                                 <Route path="/login" element={<Login />} />
                                 <Route path="/protected" element={<ProtectedPage />} />
+                                <Route path="/chess" element={<ChessBoard />} />
                                 <Route
                                     path="/"
                                     element={
@@ -29,9 +32,9 @@ function App() {
                                     }
                                 />
                             </Routes>
-                        </main>
                     </div>
             </Router>
+            <Chat />
         </HeroUIProvider>
 );
 }

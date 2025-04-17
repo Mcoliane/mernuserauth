@@ -34,44 +34,47 @@ function Login() {
   };
 
   return (
-      <div className="flex min-h-screen w-full">
-        {/* Image section */}
-        <div className="flex w-fit md:w-1/3 items-center justify-center p-8 bg-chess-color">
-          <div className="w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-6">Login</h2>
-            <p className="text-sm text-red-500 mb-4">{message}</p>
-            <Form className=" flex flex-col gap-3 items-center justify-center"
-                  onSubmit={handleSubmit}>
-              <Input
-                  type="email"
-                  label="Email"
-                  labelPlacement="outside"
-                  placeholder="email@email.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  isRequired
-              />
-              <Input
-                  type="password"
-                  name="password"
-                  label="Password"
-                  labelPlacement="outside"
-                  placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-              />
+      <main className="flex min-w-screen min-h-screen">
+        <div className="flex min-h-screen w-full">
+          {/* Image section */}
+          <div className="flex w-fit md:w-1/3 items-center justify-center p-8 bg-chess-color">
+            <div className="w-full max-w-md">
+              <h2 className="text-2xl font-bold mb-6">Login</h2>
+              <p className="text-sm text-red-500 mb-4">{message}</p>
+              <Form className=" flex flex-col gap-3 items-center justify-center"
+                    onSubmit={handleSubmit}>
+                <Input
+                    type="email"
+                    label="Email"
+                    labelPlacement="outside"
+                    placeholder="email@email.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                    isRequired
+                />
+                <Input
+                    type="password"
+                    name="password"
+                    label="Password"
+                    labelPlacement="outside"
+                    placeholder="Enter your password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                />
 
-              <Button color="primary" variant="flat" type="submit" className="bg-yellow-500 hover:bg-yellow-400 text-black hover:text-white font-bold py-2 px-4 border-b-4 border-yellow-700 hover:border-yellow-500 rounded">Login</Button>
+                <Button color="primary" variant="flat" type="submit"
+                        className="bg-yellow-500 hover:bg-yellow-400 text-black hover:text-white font-bold py-2 px-4 border-b-4 border-yellow-700 hover:border-yellow-500 rounded">Login</Button>
 
-            </Form>
+              </Form>
+            </div>
           </div>
+          <div
+              className="w-2/3 h-full bg-cover bg-center bg-chess-login"
+          />
         </div>
-        <div
-            className="w-2/3 h-full bg-cover bg-center bg-chess"
-        />
-      </div>
-  );
-}
+      </main>
+        );
+        }
 
-export default Login;
+        export default Login;

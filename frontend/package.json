@@ -3,17 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@heroui/navbar": "^2.2.15",
     "@heroui/react": "^2.7.6",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
+    "chess.js": "^1.2.0",
     "framer-motion": "^12.7.3",
+    "js-chess-engine": "^1.0.2",
     "react": "^18.2.0",
+    "react-chessboard": "^4.7.3",
     "react-dom": "^18.2.0",
+    "react-live-chat-loader": "^2.11.0",
     "react-router-dom": "^6.11.2",
     "react-scripts": "^5.0.1",
+    "socket.io-client": "^4.8.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

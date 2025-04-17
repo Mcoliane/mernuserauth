@@ -7,7 +7,7 @@ import {
     NavbarContent,
     NavbarItem,
     Link,
-    Button, DropdownMenu, DropdownItem, DropdownTrigger, Dropdown,
+    Button, DropdownMenu, DropdownItem, DropdownTrigger, Dropdown, Avatar,
 } from "@heroui/react";
 
 export const AcmeLogo = () => {
@@ -42,24 +42,12 @@ export default function NavComp() {
             isBordered
             className="backdrop-blur-md bg-white/80 shadow-sm text-black"
         >
-            {/* Mobile menu toggle */}
-            <NavbarContent className="sm:hidden" justify="start">
-                <NavbarMenuToggle/>
-            </NavbarContent>
-
-            {/* Brand for small screens */}
-            <NavbarContent className="sm:hidden pr-3" justify="center">
-                <NavbarBrand>
-                    <AcmeLogo/>
-                    <p className="font-bold text-xl text-primary ml-2">Chess</p>
-                </NavbarBrand>
-            </NavbarContent>
 
             {/* Main nav items for larger screens */}
             <NavbarContent className="hidden sm:flex gap-6" justify="center">
                 <NavbarBrand>
                     <AcmeLogo/>
-                    <p className="font-bold text-xl text-primary ml-2">Chess</p>
+                    <p className="font-bold text-xl text-primary ml-2"><Link href="/">Chess++</Link></p>
                 </NavbarBrand>
 
                 <NavbarItem>
@@ -93,7 +81,13 @@ export default function NavComp() {
                         }}
                     >
                         <DropdownItem key="chess" description="Play a classic chess match">
+                            <Link
+                                color="foreground"
+                                href="/chess"
+                                className="hover:text-yellow-600 transition-colors duration-300 font-medium"
+                            >
                             Chess
+                            </Link>
                         </DropdownItem>
                         <DropdownItem key="game2" description="Challenge yourself with puzzles">
                             Game 2
@@ -116,10 +110,7 @@ export default function NavComp() {
                         Protected
                     </Link>
                 </NavbarItem>
-            </NavbarContent>
 
-            {/* Right-aligned actions */}
-            <NavbarContent justify="end">
                 <NavbarItem className="hidden lg:flex">
                     <Link
                         href="/login"
@@ -140,28 +131,6 @@ export default function NavComp() {
                     </Button>
                 </NavbarItem>
             </NavbarContent>
-
-            {/* Mobile menu */}
-            <NavbarMenu>
-                {menuItems.map((item, index) => (
-                    <NavbarMenuItem key={`${item}-${index}`}>
-                        <Link
-                            className="w-full hover:text-warning transition-colors duration-300"
-                            color={
-                                index === 2
-                                    ? "warning"
-                                    : index === menuItems.length - 1
-                                        ? "danger"
-                                        : "foreground"
-                            }
-                            href="#"
-                            size="lg"
-                        >
-                            {item}
-                        </Link>
-                    </NavbarMenuItem>
-                ))}
-            </NavbarMenu>
         </Navbar>
     );
 }
