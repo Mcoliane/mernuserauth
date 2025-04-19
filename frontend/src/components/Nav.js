@@ -9,6 +9,7 @@ import {
     Link,
     Button, DropdownMenu, DropdownItem, DropdownTrigger, Dropdown, Avatar,
 } from "@heroui/react";
+import React from "react";
 
 export const AcmeLogo = () => {
     return (
@@ -119,17 +120,33 @@ export default function NavComp() {
                         Login
                     </Link>
                 </NavbarItem>
-                <NavbarItem>
-                    <Button
-                        as={Link}
-                        color="warning"
-                        href="/register"
-                        variant="flat"
-                        className="hover:text-yellow-600 transition-colors duration-300 font-medium"
-                    >
-                        Sign Up
-                    </Button>
-                </NavbarItem>
+            </NavbarContent>
+            <NavbarContent as="div" justify="end">
+                <Dropdown placement="bottom-end">
+                    <DropdownTrigger>
+                        <Avatar
+                            isBordered
+                            color="green"
+                            as="button"
+                            radius="full"
+                            className="w-10 h-10 p-1"
+                            name="Jason Hughes"
+                            src="https://i.pravatar.cc/150?u=a042581f4e29026704d"
+                        />
+
+                    </DropdownTrigger>
+                    <DropdownMenu aria-label="Profile Actions" variant="flat">
+                        <DropdownItem key="profile" className="h-14 gap-2">
+                            <p className="font-semibold">Signed in as</p>
+                            <p className="font-semibold">zoey@example.com</p>
+                        </DropdownItem>
+                        <DropdownItem key="settings"><Link href="/profile">My Profile</Link></DropdownItem>
+                        <DropdownItem key="help_and_feedback">Help & Feedback</DropdownItem>
+                        <DropdownItem key="logout" color="danger">
+                            Log Out
+                        </DropdownItem>
+                    </DropdownMenu>
+                </Dropdown>
             </NavbarContent>
         </Navbar>
     );

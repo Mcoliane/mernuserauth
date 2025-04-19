@@ -8,7 +8,7 @@ import NavComp from './components/Nav';
 import ChessBoard from "./components/Chess";
 import Chat from "./components/ChatBot";
 import { HeroUIProvider } from "@heroui/react";
-
+import UserProfile from "./components/Profile";
 function App() {
     return (
         <HeroUIProvider>
@@ -21,6 +21,19 @@ function App() {
                                 <Route path="/login" element={<Login />} />
                                 <Route path="/protected" element={<ProtectedPage />} />
                                 <Route path="/chess" element={<ChessBoard />} />
+                                {/*Mock component*/}
+                                <Route path="/profile" element={<UserProfile
+                                    user={{
+                                        name: 'Magnus Carlsen',
+                                        email: 'magnus@chess.com',
+                                        bio: 'World Champion. Grandmaster. Coffee enthusiast.',
+                                        avatar: 'https://i.pravatar.cc/150?img=5',
+                                        bestTime: '1:45',
+                                        highScore: '2870',
+                                        gamesPlayed: 120,
+                                        winRate: '92%',
+                                    }}
+                                />} />
                                 <Route
                                     path="/"
                                     element={
