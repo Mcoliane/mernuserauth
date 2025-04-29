@@ -1,70 +1,64 @@
-import React, { useState, useRef } from "react";
-import { Chessboard } from "react-chessboard";
-import { Game } from "js-chess-engine";
+import React, {useState, useRef} from "react";
+import ChessGameMode from './ChessGameMode';
+import RulesPopup from "./RulesPopup";
 
 function ChessBoard() {
-    const gameRef = useRef(null);
-    const [fen, setFen] = useState(""); // Initialize with an empty string
+    const [mode, setMode] = useState("AI");
+    const gameModeRef = useRef(); // <- new
 
-    // Initialize the game instance only once
-    if (!gameRef.current) {
-        gameRef.current = new Game();
-        setFen(gameRef.current.exportFEN());
-    }
-
-    const makeAMove = (from, to) => {
-        try {
-            gameRef.current.move(from, to);
-            setFen(gameRef.current.exportFEN());
-            return true;
-        } catch (e) {
-            console.error(e);
-            return false;
-        }
+    const handleModeChange = (newMode) => {
+        setMode(newMode);
     };
 
-    const onDrop = (sourceSquare, targetSquare) => {
-        const moveMade = makeAMove(sourceSquare, targetSquare);
-        if (moveMade) {
-            // Engine makes a move
-            gameRef.current.aiMove();
-            setFen(gameRef.current.exportFEN());
-        }
+    const handleResetGame = () => {
+        gameModeRef.current?.resetGame();
     };
 
-    return (
-        <div
+    return (<div
             className="min-h-screen flex items-center justify-center bg-chess-game bg-cover bg-center px-4 py-12">
             <div
-                className="w-full max-w-xl bg-black/60 backdrop-blur-xl rounded-2xl border border-white/30 p-8 shadow-2xl space-y-6">
+                className="w-full max-w-xl bg-black/60 bg-black-500 rounded-2xl border border-white/30 p-8 shadow-2xl space-y-6">
                 <h1 className="text-center text-4xl font-semibold text-white mb-4 tracking-wider uppercase">
                     ♞ Chess Master
                 </h1>
 
-                <div className="flex justify-center items-center">
-                    <Chessboard
-                        position={fen}
-                        onPieceDrop={onDrop}
-                    />
+                {/* Mode Selector */}
+                <div className="flex justify-center space-x-4 mb-6">
+                    <button
+                        onClick={() => handleModeChange("AI")}
+                        className={`px-4 py-2 rounded-full ${mode === "AI" ? "bg-green-600" : "bg-gray-600"} text-white`}>
+                        Play vs AI
+                    </button>
+                    <button
+                        onClick={() => handleModeChange("VS")}
+                        className={`px-4 py-2 rounded-full ${mode === "VS" ? "bg-green-600" : "bg-gray-600"} text-white`}>
+                        Player vs Player
+                    </button>
+                </div>
+
+                <div className="flex justify-center items-center relative">
+                    <ChessGameMode ref={gameModeRef} mode={mode}/>
                 </div>
 
                 <div className="text-center mt-4 text-lg text-gray-300">
-                    <span className="font-semibold text-white">AI Opponent</span> • <span className="italic">Make your move!</span>
+                    <span
+                        className="font-semibold text-white">{mode === "AI" ? "AI Opponent" : "Player vs Player"}</span> • <span
+                    className="italic">Make your move!</span>
                 </div>
 
-                {/* Optional Action Buttons */}
-                <div className="flex justify-center space-x-4">
+                {/* Action Buttons */}
+                <div className="flex justify-center space-x-4 mt-4">
                     <button
+                        onClick={handleResetGame}
                         className="bg-green-600 text-white rounded-full px-6 py-3 shadow-md hover:bg-green-500 transition duration-300">
                         Reset Game
                     </button>
-                    <button
-                        className="bg-gray-600 text-white rounded-full px-6 py-3 shadow-md hover:bg-gray-500 transition duration-300">
-                        Undo Move
-                    </button>
+
                 </div>
             </div>
+            <RulesPopup/>
         </div>
+
     );
 }
 

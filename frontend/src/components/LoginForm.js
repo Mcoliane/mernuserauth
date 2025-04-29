@@ -6,21 +6,19 @@ export default function LoginForm({ formData, message, handleChange, handleSubmi
         <>
             <p className="text-sm text-red-500 mb-4">{message}</p>
             <Form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+                <label>Email</label>
                 <Input
                     type="email"
                     name="email"
-                    label="Email"
-                    labelPlacement="outside"
-                    placeholder="email@email.com"
-                    value={formData.email}
-                    onChange={handleChange}
-                    isRequired
+                    placeholder="Enter your email"
+                    // value={formData.email}
+                    // onChange={handleChange}
+                    // isRequired
                 />
+                <label>Password</label>
                 <Input
                     type="password"
                     name="password"
-                    label="Password"
-                    labelPlacement="outside"
                     placeholder="Enter your password"
                     value={formData.password}
                     onChange={handleChange}
@@ -29,7 +27,7 @@ export default function LoginForm({ formData, message, handleChange, handleSubmi
                 <Button color="primary" variant="flat" type="submit"
                         className="bg-yellow-500 hover:bg-yellow-400 text-black hover:text-white font-bold py-2 px-4 border-b-4 border-yellow-700 hover:border-yellow-500 rounded">
 
-                Login
+                    Login
                 </Button>
             </Form>
         </>

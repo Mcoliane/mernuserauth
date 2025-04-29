@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Form, Input, Button, Tabs, Tab, Card, CardBody, Link} from "@heroui/react";
+import { Tabs, Tab, Card, CardBody } from "@heroui/react";
 import LoginForm from "./LoginForm";
 import SignUpForm from "./SignupForm";
 
@@ -46,7 +46,7 @@ function Login() {
                                     onSelectionChange={setSelected}
                                     classNames={{
                                         tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider",
-                                        cursor: " bg-[#22d3ee]",
+                                        cursor: " bg-[#00000]",
                                         tab: "min-w-[100px] px-4 h-12 whitespace-nowrap",
                                         tabContent: "group-data-[selected=true]:text-[#EAB308]",
                                     }}

@@ -4,11 +4,13 @@ import { Form, Input, Button, Link } from '@heroui/react';
 export default function SignUpForm({ onSwitchTab }) {
     return (
         <Form className="flex flex-col gap-4">
-            <Input isRequired label="Name" placeholder="Enter your name" type="text" />
-            <Input isRequired label="Email" placeholder="Enter your email" type="email" />
+            <label>Name</label>
+            <Input isRequired placeholder="Enter your name" type="text" />
+            <label>Email</label>
+            <Input isRequired placeholder="Enter your email" type="email" />
+            <label>Password</label>
             <Input
                 isRequired
-                label="Password"
                 placeholder="Enter your password"
                 type="password"
             />
