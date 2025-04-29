@@ -1,68 +1,86 @@
+// routes/auth.js
 const express = require('express');
-const router = express.Router();
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-const bcrypt = require('bcrypt');
+const router  = express.Router();
+const jwt     = require('jsonwebtoken');
+const bcrypt  = require('bcrypt');
 
-// REGISTER
+const User         = require('../models/User');
+const PlayerRating = require('../models/playerRating');
+
+/* ------------------------------------------------------------------ *
+ * POST /api/auth/register                                            *
+ * ------------------------------------------------------------------ */
 router.post('/register', async (req, res) => {
   const { username, email, password } = req.body;
 
   try {
-    // Check if user already exists
-    let user = await User.findOne({ email });
-    if (user) {
+    // 1️⃣  Duplicate-email guard
+    if (await User.findOne({ email }))
       return res.status(400).json({ message: 'User already exists' });
-    }
 
-    // Create new user
-    user = new User({ username, email, password });
-    await user.save();
+    // 2️⃣  Create the User (password is auto-hashed via pre-save hook)
+    const newUser = await User.create({ username, email, password });
 
-    res.status(201).json({ message: 'User created successfully' });
-  } catch (error) {
-    console.error(error);
+    // 3️⃣  Bootstrap their initial rating
+    await PlayerRating.bootstrapForUser(newUser._id);
+
+    // 4️⃣  Sign JWT
+    const token = jwt.sign(
+      { userId: newUser._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    // 5️⃣  Set http-only cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure:   process.env.NODE_ENV === 'production', // HTTPS only in prod
+      sameSite: 'strict',
+      maxAge:   24 * 60 * 60 * 1000                    // 1 day
+    });
+
+    res.status(201).json({ message: 'Registration successful' });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// LOGIN
+/* ------------------------------------------------------------------ *
+ * POST /api/auth/login                                               *
+ * ------------------------------------------------------------------ */
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
     const user = await User.findOne({ email });
-
-    // Check if user exists and password is valid
-    if (!user || !(await user.matchPassword(password))) {
+    if (!user || !(await user.matchPassword(password)))
       return res.status(401).json({ message: 'Invalid email or password' });
-    }
 
-    // Create JWT
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
 
-    // Set token in an httpOnly cookie
     res.cookie('token', token, {
       httpOnly: true,
-      secure: false, // Set to `true` in production if using HTTPS
+      secure:   process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000 // 1 day
+      maxAge:   24 * 60 * 60 * 1000
     });
 
     res.status(200).json({ message: 'Logged in successfully' });
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// LOGOUT
-router.post('/logout', (req, res) => {
-  // Clear the cookie
+/* ------------------------------------------------------------------ *
+ * POST /api/auth/logout                                              *
+ * ------------------------------------------------------------------ */
+router.post('/logout', (_req, res) => {
   res.clearCookie('token');
   res.status(200).json({ message: 'Logged out successfully' });
 });
