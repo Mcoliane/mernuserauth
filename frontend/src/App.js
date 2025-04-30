@@ -12,6 +12,9 @@ import {HeroUIProvider} from "@heroui/react";
 import UserProfile from "./components/Profile";
 import Footer from './components/Footer';
 import RulesPage from "./components/RulesPage";
+import Tournament from "./components/Tournament";
+import FriendsList from "./components/FriendsList";
+import TournamentSignUp from "./components/TournamentSignUp";
 
 function App() {
     return (
@@ -31,6 +34,9 @@ function App() {
                             <Route path="/protected" element={<ProtectedPage />} />
                             <Route path="/chess" element={<ChessBoard />} />
                             <Route path="/howToPlay" element={<RulesPage /> } />
+                            <Route path="/tournaments" element={<Tournament />} />
+                            <Route path="/friends" element={<FriendsList/>}/>
+                            <Route path="/tournamentsignup/:id" element={<TournamentSignUp />} />
                             <Route
                                 path="/profile"
                                 element={
