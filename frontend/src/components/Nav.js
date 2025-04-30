@@ -3,54 +3,50 @@ import Logo from '../assets/icon.png';
 import {
     Navbar,
     NavbarBrand,
-    NavbarMenuToggle,
-    NavbarMenu,
-    NavbarMenuItem,
     NavbarContent,
     NavbarItem,
     Link,
-    Button, DropdownMenu, DropdownItem, DropdownTrigger, Dropdown, Avatar,
-} from "@heroui/react";
-export const AcmeLogo = () => {
-    return (
-        <svg fill="none" height="36" viewBox="0 0 32 32" width="36">
-            <path
-                clipRule="evenodd"
-                d="M17.6482 10.1305L15.8785 7.02583L7.02979 22.5499H10.5278L17.6482 10.1305ZM19.8798 14.0457L18.11 17.1983L19.394 19.4511H16.8453L15.1056 22.5499H24.7272L19.8798 14.0457Z"
-                fill="currentColor"
-                fillRule="evenodd"
-            />
-        </svg>
-    );
-};
+    Button,
+    Dropdown,
+    DropdownTrigger,
+    DropdownMenu,
+    DropdownItem,
+    Avatar,
+} from "@heroui/react"; // or wherever you get your components
 
 export default function NavComp() {
-    const menuItems = [
-        "Profile",
-        "Dashboard",
-        "Activity",
-        "Analytics",
-        "System",
-        "Deployments",
-        "My Settings",
-        "Team Settings",
-        "Help & Feedback",
-        "Log Out",
-    ];
+    const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
-    return (
-        <Navbar
+    return (<Navbar
             isBordered
-            className="backdrop-blur-md bg-white/80 shadow-sm text-black"
+            className="backdrop-blur-md bg-white/80 shadow-sm text-black relative"
         >
+            {/* Top bar */}
+            <NavbarContent justify="start">
+                {/* Hamburger for mobile */}
+                <button
+                    className="sm:hidden p-2 focus:outline-none"
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                >
+                    {/* Simple Hamburger Icon */}
+                    <div className="space-y-1">
+                        <div className="w-6 h-0.5 bg-black"></div>
+                        <div className="w-6 h-0.5 bg-black"></div>
+                        <div className="w-6 h-0.5 bg-black"></div>
+                    </div>
+                </button>
 
-            {/* Main nav items for larger screens */}
-            <NavbarContent className="hidden sm:flex gap-6" justify="center">
+                {/* Brand Logo */}
                 <NavbarBrand>
-                    <AcmeLogo/>
-                    <p className="font-bold text-xl text-primary ml-2"><Link href="/">Chess++</Link></p>
+                    <img src={Logo} alt="Chess++ Logo" className="h-9 w-auto"/>
+                    <p className="font-bold text-xl text-primary ml-2">
+                        <Link href="/">Chess++</Link>
+                    </p>
                 </NavbarBrand>
+            </NavbarContent>
 
+            {/* Desktop Menu */}
+            <NavbarContent className="hidden sm:flex gap-4" justify="center">
                 <NavbarItem>
                     <Link
                         color="foreground"
@@ -84,14 +80,20 @@ export default function NavComp() {
                         <DropdownItem key="chess" description="Play a classic chess match">
                             <Link
                                 color="foreground"
-                                href="/chess"
+                                href="/play"
                                 className="hover:text-yellow-600 transition-colors duration-300 font-medium"
                             >
-                            Chess
+                                Chess
                             </Link>
                         </DropdownItem>
                         <DropdownItem key="game2" description="Challenge yourself with puzzles">
-                            Game 2
+                            <Link
+                                color="foreground"
+                                href="/howToPlay"
+                                className="hover:text-yellow-600 transition-colors duration-300 font-medium"
+                            >
+                                Game Rules
+                            </Link>
                         </DropdownItem>
                         <DropdownItem key="game3" description="Multiplayer battles">
                             Game 3
@@ -126,7 +128,7 @@ export default function NavComp() {
                         color="foreground"
                         href="/friends"
                         className="hover:text-yellow-600 transition-colors duration-300 font-medium"
-                        >
+                    >
                         Friends
                     </Link>
                 </NavbarItem>
@@ -139,6 +141,7 @@ export default function NavComp() {
                     </Link>
                 </NavbarItem>
             </NavbarContent>
+            {/* Profile Avatar */}
             <NavbarContent as="div" justify="end">
                 <Dropdown placement="bottom-end">
                     <DropdownTrigger>
@@ -151,21 +154,69 @@ export default function NavComp() {
                             name="Jason Hughes"
                             src="https://i.pravatar.cc/150?u=a042581f4e29026704d"
                         />
-
                     </DropdownTrigger>
-                    <DropdownMenu aria-label="Profile Actions" variant="flat">
+                    <DropdownMenu aria-label="Profile Actions" variant="flat"
+                                  className="bg-white border border-gray-200 shadow-lg rounded-lg p-2" itemClasses={{
+                        base: "rounded-md px-4 py-3 hover:bg-yellow-100 hover:text-black transition duration-300",
+                    }}>
                         <DropdownItem key="profile" className="h-14 gap-2">
-                            <p className="font-semibold">Signed in as</p>
-                            <p className="font-semibold">zoey@example.com</p>
+                            <p className="font-semibold">Signed in as zoey@example.com</p>
                         </DropdownItem>
-                        <DropdownItem key="settings"><Link href="/profile">My Profile</Link></DropdownItem>
-                        <DropdownItem key="help_and_feedback">Help & Feedback</DropdownItem>
+                        <DropdownItem key="settings">
+                            <Link href="/profile">My Profile</Link>
+                        </DropdownItem>
                         <DropdownItem key="logout" color="danger">
                             Log Out
                         </DropdownItem>
                     </DropdownMenu>
                 </Dropdown>
             </NavbarContent>
-        </Navbar>
-    );
+
+            {/* Mobile Menu */}
+            {isMenuOpen && (
+                <div className="absolute top-full left-0 w-full bg-white shadow-md flex flex-col sm:hidden z-50">
+                    <Link
+                        href="/"
+                        className="block px-6 py-4 text-black hover:bg-yellow-100"
+                        onPress={() => setIsMenuOpen(false)}
+                    >
+                        Home
+                    </Link>
+                    <Link
+                        href="/chess"
+                        className="block px-6 py-4 text-black hover:bg-yellow-100"
+                        onPress={() => setIsMenuOpen(false)}
+                    >
+                        Chess
+                    </Link>
+                    <Link
+                        href="#"
+                        className="block px-6 py-4 text-black hover:bg-yellow-100"
+                        onPress={() => setIsMenuOpen(false)}
+                    >
+                        Game Coming Soon
+                    </Link>
+                    <Link
+                        href="#"
+                        className="block px-6 py-4 text-black hover:bg-yellow-100"
+                        onPress={() => setIsMenuOpen(false)}
+                    >
+                        Game Coming Soon
+                    </Link>
+                    <Link
+                        href="/protected"
+                        className="block px-6 py-4 text-black hover:bg-yellow-100"
+                        onPress={() => setIsMenuOpen(false)}
+                    >
+                        Protected
+                    </Link>
+                    <Link
+                        href="/login"
+                        className="block px-6 py-4 text-black hover:bg-yellow-100"
+                        onPress={() => setIsMenuOpen(false)}
+                    >
+                        Login
+                    </Link>
+                </div>)}
+        </Navbar>);
 }

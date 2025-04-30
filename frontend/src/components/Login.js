@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import { Tabs, Tab, Card, CardBody } from "@heroui/react";
+import {Tabs, Tab, Card, CardBody} from "@heroui/react";
 import LoginForm from "./LoginForm";
 import SignUpForm from "./SignupForm";
 
@@ -35,45 +35,48 @@ function Login() {
     };
 
     return (<main className="flex min-w-screen min-h-screen">
-            <div className="flex min-h-screen w-full">
-                {/* Image section */}
-                <div className="flex w-fit md:w-1/3 items-center justify-center p-8 bg-chess-color">
-                    <div className="w-full max-w-md">
-                        <Card className="max-w-full w-[340px] h-[400px]">
-                            <CardBody className="overflow-hidden">
-                                <Tabs
-                                    selectedKey={selected}
-                                    onSelectionChange={setSelected}
-                                    classNames={{
-                                        tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider",
-                                        cursor: " bg-[#00000]",
-                                        tab: "min-w-[100px] px-4 h-12 whitespace-nowrap",
-                                        tabContent: "group-data-[selected=true]:text-[#EAB308]",
-                                    }}
-                                    fullWidth
-                                    aria-label="Tabs form"
-                                >
-                                    <Tab key="login" title="Login"/>
-                                    <Tab key="sign-up" title="Sign Up"/>
-                                </Tabs>
-                                <div className="mt-6 min-h-[420px] transition-all duration-300 ease-in-out">
+        <div className="flex min-h-screen w-full">
+            {/* Image section */}
+            <div
+                className="flex w-fit md:w-1/3 items-center justify-center p-8 bg-gradient-to-br from-gray-900 to-[#110613] text-white ">
 
-                                    {selected === 'login' ? (<LoginForm
-                                        formData={formData}
-                                        message={message}
-                                        handleChange={handleChange}
-                                        handleSubmit={handleSubmit}
-                                    />) : (<SignUpForm onSwitchTab={() => setSelected('login')}/>)}
-                                </div>
-                            </CardBody>
-                        </Card>
-                    </div>
+                <div className="w-full max-w-md">
+                    <Card className="w-[340px] h-[600px] flex flex-col">
+                        <Tabs
+                            selectedKey={selected}
+                            onSelectionChange={setSelected}
+                            classNames={{
+                                tabList: "flex w-full justify-center px-2 py-1 space-x-2",
+
+                                tab: "flex-1 rounded-md py-2 text-sm font-semibold text-white text-center transition-all duration-300 ease-in-out bg-gray-700 hover:bg-gray-600 data-[selected=true]:bg-yellow-500 data-[selected=true]:text-black shadow-sm",
+                                cursor: "",
+                            }}
+                            fullWidth
+                            aria-label="Tabs form"
+                        >
+                            <Tab key="login" title="Login"/>
+                            <Tab key="sign-up" title="Sign Up"/>
+                        </Tabs>
+                        <CardBody className="flex-1 overflow-auto px-4 py-6">
+
+                            <div className="mt-6 min-h-[420px] transition-all duration-300 ease-in-out">
+
+                                {selected === 'login' ? (<LoginForm
+                                    formData={formData}
+                                    message={message}
+                                    handleChange={handleChange}
+                                    handleSubmit={handleSubmit}
+                                />) : (<SignUpForm onSwitchTab={() => setSelected('login')}/>)}
+                            </div>
+                        </CardBody>
+                    </Card>
                 </div>
-                <div
-                    className="w-2/3 h-full bg-cover bg-center bg-chess-login"
-                />
             </div>
-        </main>);
+            <div
+                className="w-2/3 h-full bg-cover bg-center bg-chess-login"
+            />
+        </div>
+    </main>);
 }
 
 export default Login;

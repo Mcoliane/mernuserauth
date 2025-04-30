@@ -1,9 +1,9 @@
 import React, {useState, useRef, forwardRef, useImperativeHandle} from "react";
-import { Chessboard } from "react-chessboard";
-import { Game } from "js-chess-engine";
+import {Chessboard} from "react-chessboard";
+import {Game} from "js-chess-engine";
 
 // Use forwardRef so parent can call functions
-const ChessGameMode = forwardRef(({ mode }, ref) => {
+const ChessGameMode = forwardRef(({mode}, ref) => {
     const gameRef = useRef(null);
     const [fen, setFen] = useState("");
 
@@ -39,12 +39,10 @@ const ChessGameMode = forwardRef(({ mode }, ref) => {
         },
     }));
 
-    return (
-        <Chessboard
+    return (<Chessboard
             position={fen}
             onPieceDrop={onDrop}
-        />
-    );
+        />);
 });
 
 export default ChessGameMode;
