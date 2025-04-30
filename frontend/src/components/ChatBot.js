@@ -1,8 +1,20 @@
 import React, {useEffect, useRef, useState} from "react";
 import io from "socket.io-client";
 import EmojiPicker from "emoji-picker-react";
+import CryptoJS from "crypto-js";
 
-const socket = io("http://localhost:5001");
+const SECRET_KEY = "your_shared_secret_key";
+
+const encryptMessage = (text) => {
+    return CryptoJS.AES.encrypt(text, SECRET_KEY).toString();
+};
+
+const decryptMessage = (cipherText) => {
+    const bytes = CryptoJS.AES.decrypt(cipherText, SECRET_KEY);
+    return bytes.toString(CryptoJS.enc.Utf8);
+};
+
+const socket = io("http://localhost:5001/chat");
 
 export default function Chat() {
     const [message, setMessage] = useState("");
@@ -12,11 +24,12 @@ export default function Chat() {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const chatEndRef = useRef(null);
 
-    const username = "You"; // Replace with real username logic
+    const username = useRef(`User${Math.floor(Math.random() * 1000)}`).current;
 
     useEffect(() => {
         socket.on("receive_message", (data) => {
-            setChat((prev) => [...prev, data]);
+            const decryptedText = decryptMessage(data.text);
+            setChat((prev) => [...prev, {...data, text: decryptedText}]);
         });
 
         socket.on("user_typing", () => {
@@ -36,15 +49,17 @@ export default function Chat() {
 
     const sendMessage = () => {
         if (message.trim()) {
+            const encrypted = encryptMessage(message);
             const data = {
                 user: username,
-                text: message,
+                text: encrypted,
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}),
             };
             socket.emit("send_message", data);
             setMessage("");
         }
     };
+
 
     const handleTyping = (e) => {
         setMessage(e.target.value);
@@ -73,11 +88,19 @@ export default function Chat() {
 
             {/* Messages */}
             <div className="h-60 overflow-y-auto px-4 py-2 text-sm space-y-1 bg-black/60">
-                {chat.map((msg, idx) => (<div key={idx}>
-                    <span className="font-bold text-yellow-300">{msg.user}</span>:{" "}
-                    <span className="text-white">{msg.text}</span>{" "}
-                    <span className="text-gray-400 text-xs">({msg.time})</span>
-                </div>))}
+                {chat.map((msg, idx) => {
+                    const isMe = msg.user === username;
+                    return (<div key={idx} className="flex flex-col">
+      <span className={`font-semibold ${isMe ? 'text-green-400' : 'text-yellow-300'}`}>
+        {isMe ? 'Me' : msg.user}
+      </span>
+                        <div className="flex justify-between items-center">
+                            <span className="text-white">{msg.text}</span>
+                            <span className="text-gray-400 text-xs ml-2">({msg.time})</span>
+                        </div>
+                    </div>);
+                })}
+
                 {typing && (<div className="italic text-gray-400">Someone is typing…</div>)}
                 <div ref={chatEndRef}/>
             </div>
@@ -91,10 +114,6 @@ export default function Chat() {
                     😊
                 </button>
 
-                {showEmojiPicker && (<div className="absolute bottom-16 left-2 z-50">
-                    <EmojiPicker theme="dark" onEmojiClick={handleEmojiClick}/>
-                </div>)}
-
                 <input
                     value={message}
                     onChange={handleTyping}
@@ -107,6 +126,17 @@ export default function Chat() {
                 >
                     Send
                 </button>
+            </div>
+
+        </div>)}
+        {/* Emoji Picker */}
+        {showEmojiPicker && (<div className="absolute bottom-14 right-60 z-50">
+            <div className="w-80 h-80 overflow-hidden rounded-lg shadow-lg">
+                <EmojiPicker
+                    onEmojiClick={handleEmojiClick}
+                    theme="dark"
+                    width="100%"
+                />
             </div>
         </div>)}
     </div>);

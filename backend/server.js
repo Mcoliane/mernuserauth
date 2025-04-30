@@ -5,19 +5,22 @@ const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/Auth');
 const requireAuth = require('./middleware/auth');
-const { Game } = require("js-chess-engine");
+const CryptoJS = require("crypto-js");
+
+const SECRET_KEY = "your_shared_secret_key";
 
 // Online connection
-const { Server } = require("socket.io");
+const {Server} = require("socket.io");
 const http = require("http");
+const {handleRoomJoin, handleRankedQueue} = require("./sockets/socketHandler");
+const {waitingPlayer, rooms} = require("./sockets/rooms");
 
 
 // Initialize Express
 const app = express();
 app.use(cors({
     origin: '*',  // This can be more restrictive (e.g., `http://localhost:3000`) if needed
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST'], allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 // Initialize socket
 const server = http.createServer(app);
@@ -29,8 +32,8 @@ const io = new Server(server, {
 });
 
 
-// // Connect to MongoDB
-// connectDB(process.env.MONGO_URI);
+// Connect to MongoDB
+connectDB(process.env.MONGO_URI);
 
 // Middleware
 app.use(cookieParser());
@@ -38,14 +41,14 @@ app.use(cookieParser());
 app.use(express.json());
 
 // Routes
-// app.use('/api/auth', authRoutes);
-//
-// // Example of a protected route
-// app.get('/api/protected', requireAuth, (req, res) => {
-//   res.status(200).json({ message: 'You have accessed a protected route!', userId: req.userId });
-// });
+app.use('/api/auth', authRoutes);
 
-io.on('connection', (socket) => {
+// Example of a protected route
+app.get('/api/protected', requireAuth, (req, res) => {
+  res.status(200).json({ message: 'You have accessed a protected route!', userId: req.userId });
+});
+const gameNamespace = io.of("/game");
+gameNamespace.on('connection', (socket) => {
     console.log('Connected:', socket.id);
 
     // Handle room join and ranked queue logic
@@ -55,9 +58,7 @@ io.on('connection', (socket) => {
     socket.on('disconnecting', () => {
         console.log('Player disconnected:', socket.id);
         // Remove player from ranked queue if disconnected
-        if (waitingPlayer === socket) {
-            waitingPlayer = null;
-        }
+
         socket.isInQueue = false;
 
         // Clean up rooms when player disconnects
@@ -70,6 +71,35 @@ io.on('connection', (socket) => {
     });
 });
 
+const decryptMessage = (cipherText) => {
+    const bytes = CryptoJS.AES.decrypt(cipherText, SECRET_KEY);
+    return bytes.toString(CryptoJS.enc.Utf8);
+};
+
+const encryptMessage = (plainText) => {
+    return CryptoJS.AES.encrypt(plainText, SECRET_KEY).toString();
+};
+const chatNamespace = io.of("/chat");
+chatNamespace.on("connection", (socket) => {
+    console.log("[CHAT] User connected:", socket.id);
+
+    socket.on("send_message", (data) => {
+        // You can decrypt it here if needed (for logging or moderation)
+        const decrypted = decryptMessage(data.text);
+        console.log(`[Chat] ${data.user}:`, decrypted);
+
+        // Broadcast encrypted (or original)
+        io.of("/chat").emit("receive_message", data);
+    });
+
+    socket.on("typing", () => {
+        socket.broadcast.emit("user_typing"); // notify others
+    });
+
+    socket.on("disconnect", () => {
+        console.log("[CHAT] User disconnected:", socket.id);
+    });
+});
 
 // Start the server
 const PORT = process.env.PORT || 5001;
