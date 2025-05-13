@@ -1,9 +1,9 @@
-import React, {useState, useRef, forwardRef, useImperativeHandle} from "react";
-import {Chessboard} from "react-chessboard";
-import {Game} from "js-chess-engine";
+import React, { useState, useRef, forwardRef, useImperativeHandle } from "react";
+import { Chessboard } from "react-chessboard";
+import { Game } from "js-chess-engine";
 
 // Use forwardRef so parent can call functions
-const ChessGameMode = forwardRef(({mode}, ref) => {
+const ChessGameMode = forwardRef(({ mode }, ref) => {
     const gameRef = useRef(null);
     const [fen, setFen] = useState("");
 
@@ -11,6 +11,28 @@ const ChessGameMode = forwardRef(({mode}, ref) => {
         gameRef.current = new Game();
         setFen(gameRef.current.exportFEN());
     }
+
+    const checkGameOver = () => {
+        const state = gameRef.current.exportJson();
+
+        if (state.checkMate) {
+            const winner = state.turn === 1 ? "Black" : "White";  // Turn is on loser
+            alert(`${winner} wins by checkmate!`);
+            return true;
+        }
+
+        if (state.staleMate) {
+            alert("Draw by stalemate.");
+            return true;
+        }
+
+        if (state.insufficientMaterial) {
+            alert("Draw by insufficient material.");
+            return true;
+        }
+
+        return false;
+    };
 
     const makeAMove = (from, to) => {
         try {
@@ -25,13 +47,21 @@ const ChessGameMode = forwardRef(({mode}, ref) => {
 
     const onDrop = (sourceSquare, targetSquare) => {
         const moveMade = makeAMove(sourceSquare, targetSquare);
-        if (moveMade && mode === "AI") {
-            gameRef.current.aiMove();
-            setFen(gameRef.current.exportFEN());
+
+        if (moveMade) {
+            const gameOver = checkGameOver();
+
+            if (!gameOver && mode === "AI") {
+                gameRef.current.aiMove();
+                setFen(gameRef.current.exportFEN());
+
+                setTimeout(() => {
+                    checkGameOver();
+                }, 100);
+            }
         }
     };
 
-    // Expose reset and undo to the parent
     useImperativeHandle(ref, () => ({
         resetGame: () => {
             gameRef.current = new Game();
@@ -39,10 +69,12 @@ const ChessGameMode = forwardRef(({mode}, ref) => {
         },
     }));
 
-    return (<Chessboard
+    return (
+        <Chessboard
             position={fen}
             onPieceDrop={onDrop}
-        />);
+        />
+    );
 });
 
 export default ChessGameMode;

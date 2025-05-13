@@ -31,7 +31,7 @@ function App() {
                             <Route path="/register" element={<Register/>}/>
                             <Route path="/login" element={<Login/>}/>
                             <Route path="/protected" element={<ProtectedPage/>}/>
-                            <Route path="/play" element={<ChessBoard/>}/>
+                            <Route path="/chess" element={<ChessBoard/>}/>
                             <Route path="/howToPlay" element={<RulesPage/>}/>
                             <Route path="/tournaments" element={<Tournament/>}/>
                             <Route path="/friends" element={<FriendsList/>}/>

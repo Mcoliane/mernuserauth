@@ -5,7 +5,7 @@ import {Chess} from "chess.js";
 import io from "socket.io-client";
 import toast, {Toaster} from "react-hot-toast";
 
-const socket = io("http://localhost:5001/game");
+const socket = io("http://localhost:5001/chess");
 
 function OnlineGameMode() {
     const location = useLocation();
@@ -20,7 +20,6 @@ function OnlineGameMode() {
     const [showModal, setShowModal] = useState(false);
     const [gameOver, setGameOver] = useState(false);
 
-    // Reset chess and session state on mount or when room changes
     useEffect(() => {
         chessRef.current = new Chess();
         setGameFen(chessRef.current.fen());
@@ -35,51 +34,32 @@ function OnlineGameMode() {
         }
     }, [roomFromUrl]);
 
-    // Setup socket listeners
     useEffect(() => {
         socket.on("player-color", (assignedColor) => {
             setColor(assignedColor);
             sessionStorage.setItem("color", assignedColor);
         });
 
-        socket.on("move", ({from, to}) => {
-            const move = chessRef.current.move({from, to});
-            if (!move) {
-                console.error("Received illegal move", from, to);
-                return;
-            }
-
-            const newFen = chessRef.current.fen();
-            setGameFen(newFen);
-            sessionStorage.setItem("fen", newFen);
-
-            if (chessRef.current.isGameOver()) {
-                let outcome;
-                let winner;
-
-                if (chessRef.current.in_draw()) {
-                    outcome = "draw";
-                    winner = null;
-                } else if (chessRef.current.isCheckmate()) {
-                    winner = chessRef.current.turn() === "w" ? "b" : "w"; // Opponent just checkmated you
-                    outcome = winner === color ? "win" : "loss";
-                }
-
-                addGameToHistory(outcome);
-                setGameOver(true);
-                if (outcome === "draw") {
-                    toast("Draw!");
-                } else {
-                    const youWon = outcome === "win";
-                    toast[youWon ? "success" : "error"](youWon ? "You won!" : "You lost!");
-                    socket.emit("game-over", {
-                        room, winner: youWon ? color : color === "w" ? "b" : "w",
-                    });
-                }
-
+        socket.on("move", ({ from, to, promotion }) => {
+            const move = { from, to };
+            if (promotion) move.promotion = promotion;
+            const result = chessRef.current.move(move);
+            if (result) {
+                const newFen = chessRef.current.fen();
+                setGameFen(newFen);
+                sessionStorage.setItem("fen", newFen);
             }
         });
 
+        socket.on("game-over", ({ winner }) => {
+            setGameOver(true);
+            toast.success(`Game over! Winner: ${winner}`);
+        });
+
+        socket.on("opponent-left", () => {
+            setGameOver(true);
+            toast.error("Opponent disconnected.");
+        });
 
         socket.on("room-full", () => {
             setError("Room is full. Please try another room.");
@@ -90,31 +70,15 @@ function OnlineGameMode() {
             socket.emit("join-room", roomFromUrl);
             sessionStorage.setItem("joined", "true");
         }
-        socket.on("game-over", ({winner}) => {
-            let outcome;
-            if (!winner) {
-                outcome = "draw";
-            } else {
-                outcome = winner === color ? "win" : "loss";
-            }
-            addGameToHistory(outcome);
-            setGameOver(true);
-            toast[outcome === "win" ? "success" : outcome === "loss" ? "error" : ""](outcome === "win" ? "You won!" : outcome === "loss" ? "You lost!" : "Draw!");
-        });
-
 
         return () => {
             socket.off("player-color");
             socket.off("move");
+            socket.off("game-over");
+            socket.off("opponent-left");
             socket.off("room-full");
         };
     }, [roomFromUrl, room, color]);
-
-    const addGameToHistory = (outcome) => {
-        const history = JSON.parse(localStorage.getItem("gameHistory")) || [];
-        history.push({date: new Date().toISOString(), outcome});
-        localStorage.setItem("gameHistory", JSON.stringify(history));
-    };
 
     const handleJoin = () => {
         if (!room) return;
@@ -136,7 +100,7 @@ function OnlineGameMode() {
     };
 
     const handleCreateRoom = () => {
-        const newRoom = generateRoomCode();
+        const newRoom = Math.random().toString(36).substring(2, 8).toUpperCase();
         setRoom(newRoom);
         setShowModal(true);
 
@@ -154,9 +118,38 @@ function OnlineGameMode() {
         window.history.replaceState({}, "", `?room=${newRoom}`);
     };
 
-    const generateRoomCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+    const onDrop = (sourceSquare, targetSquare) => {
+        if (gameOver) return false;
 
-    const copyToClipboard = () => navigator.clipboard.writeText(room);
+        const piece = chessRef.current.get(sourceSquare);
+        if (!piece || piece.color !== color) return false;
+
+        const isPromotion = piece.type === "p" &&
+            ((piece.color === "w" && targetSquare[1] === "8") ||
+             (piece.color === "b" && targetSquare[1] === "1"));
+
+        const move = chessRef.current.move({
+            from: sourceSquare,
+            to: targetSquare,
+            ...(isPromotion ? { promotion: "q" } : {})
+        });
+
+        if (move) {
+            const newFen = chessRef.current.fen();
+            setGameFen(newFen);
+            sessionStorage.setItem("fen", newFen);
+            socket.emit("move", { room, from: sourceSquare, to: targetSquare, ...(isPromotion ? { promotion: "q" } : {}) });
+
+            if (chessRef.current.isGameOver()) {
+                setGameOver(true);
+                const winner = chessRef.current.turn() === "w" ? "Black" : "White";
+                toast.success(`You won!`);
+                socket.emit("game-over", { room, winner });
+            }
+        }
+
+        return !!move;
+    };
 
     const resetGame = () => {
         chessRef.current.reset();
@@ -171,63 +164,11 @@ function OnlineGameMode() {
         window.location.href = "/";
     };
 
-    const onDrop = (sourceSquare, targetSquare) => {
-        if (gameOver) return false;
-
-        const piece = chessRef.current.get(sourceSquare);
-        if (!piece) {
-            console.warn("No piece on", sourceSquare);
-            return false;
-        }
-
-        if (piece.color !== color) {
-            console.warn("Not your turn or wrong color piece");
-            return false;
-        }
-
-        const isPromotion = piece.type === "p" && ((piece.color === "w" && targetSquare[1] === "8") || (piece.color === "b" && targetSquare[1] === "1"));
-
-        const move = chessRef.current.move({
-            from: sourceSquare, to: targetSquare, ...(isPromotion ? {promotion: "q"} : {})
-        });
-
-        if (!move) {
-            console.warn("Illegal move attempted:", {from: sourceSquare, to: targetSquare});
-            return false;
-        }
-
-        const newFen = chessRef.current.fen();
-        setGameFen(newFen);
-        sessionStorage.setItem("fen", newFen);
-
-        socket.emit("move", {room, from: sourceSquare, to: targetSquare});
-
-        // Check for game over
-        if (chessRef.current.isGameOver()) {
-            let outcome;
-            let winner;
-
-            if (chessRef.current.in_draw()) {
-                outcome = "draw";
-                winner = null;
-            } else if (chessRef.current.isCheckmate()) {
-                winner = chessRef.current.turn() === "w" ? "b" : "w";
-                outcome = winner === color ? "win" : "loss";
-            }
-
-            addGameToHistory(outcome);
-            setGameOver(true);
-            toast[outcome === "win" ? "success" : outcome === "loss" ? "error" : ""](outcome === "win" ? "You won!" : outcome === "loss" ? "You lost!" : "Draw!");
-            socket.emit("game-over", {
-                room, winner: outcome === "win" ? color : color === "w" ? "b" : "w",
-            });
-        }
-
-        return true;
-    };
+    const copyToClipboard = () => navigator.clipboard.writeText(room);
 
     if (!joined) {
-        return (<div className="flex flex-col items-center text-white space-y-6 w-full max-w-sm mx-auto">
+        return (
+            <div className="flex flex-col items-center text-white space-y-6 w-full max-w-sm mx-auto">
                 <h2 className="text-2xl font-semibold">Join or Create Room</h2>
                 <div className="w-full space-y-2">
                     <input
@@ -251,11 +192,13 @@ function OnlineGameMode() {
                     Create New Room
                 </button>
                 {error && <p className="text-red-400 text-sm">{error}</p>}
-            </div>);
+            </div>
+        );
     }
 
-    return (<>
-            <Toaster position="top-center"/>
+    return (
+        <>
+            <Toaster position="top-center" />
             <div className="flex flex-col items-center space-y-4 text-white w-full">
                 <h3 className="text-center text-lg font-mono bg-gray-700 py-1 px-3 rounded">
                     Room Code: {room}
@@ -269,7 +212,8 @@ function OnlineGameMode() {
                     boardOrientation={color === "w" ? "white" : "black"}
                     borderWidth={500}
                 />
-                {gameOver && (<div className="flex space-x-4 pt-4">
+                {gameOver && (
+                    <div className="flex space-x-4 pt-4">
                         <button
                             onClick={resetGame}
                             className="bg-green-600 hover:bg-green-500 text-white py-2 px-4 rounded-full"
@@ -282,9 +226,11 @@ function OnlineGameMode() {
                         >
                             Return to Menu
                         </button>
-                    </div>)}
+                    </div>
+                )}
             </div>
-            {showModal && (<div className="fixed inset-0 flex items-center justify-center bg-black/80 z-50">
+            {showModal && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black/80 z-50">
                     <div className="bg-gray-800 p-6 rounded-xl shadow-xl text-white w-80 space-y-4 text-center">
                         <h2 className="text-xl font-semibold">Room Created</h2>
                         <p className="text-lg font-mono tracking-wider bg-black/40 rounded py-2 px-4 border border-white/20">
@@ -303,8 +249,10 @@ function OnlineGameMode() {
                             Close
                         </button>
                     </div>
-                </div>)}
-        </>);
+                </div>
+            )}
+        </>
+    );
 }
 
 export default OnlineGameMode;
