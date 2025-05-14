@@ -61,7 +61,7 @@ function ChessBoard() {
         sessionStorage.removeItem(`${sessionKey}-mode`);
         setMode(newMode);
         sessionStorage.setItem(`${sessionKey}-mode`, newMode);
-        navigate(`/play?mode=${newMode}`);
+        navigate(`/chess?mode=${newMode}`);
     };
 
 
@@ -69,7 +69,7 @@ function ChessBoard() {
         if (window.confirm("Are you sure you want to go back and reset the game?")) {
             setMode(null);
             sessionStorage.removeItem(`${sessionKey}-mode`); // Clear the mode from sessionStorage
-            navigate(`/play`); // Navigate back to the game mode selection screen
+            navigate(`/chess`); // Navigate back to the game mode selection screen
         }
     };
 

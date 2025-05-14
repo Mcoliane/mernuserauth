@@ -80,7 +80,7 @@ export default function NavComp() {
                         <DropdownItem key="chess" description="Play a classic chess match">
                             <Link
                                 color="foreground"
-                                href="/play"
+                                href="/chess"
                                 className="hover:text-yellow-600 transition-colors duration-300 font-medium"
                             >
                                 Chess
