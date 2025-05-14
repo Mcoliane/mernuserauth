@@ -3,6 +3,7 @@ import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
 import HomePage from './components/Home';
 import Register from './components/Register';
 import Login from './components/Login';
+import Auth from './components/Auth';
 import ProtectedPage from './components/ProtectedPage';
 import NavComp from './components/Nav';
 import ChessBoard from "./components/Chess";
@@ -29,7 +30,7 @@ function App() {
                         <Routes>
                             <Route path="/" element={<HomePage/>}/>
                             <Route path="/register" element={<Register/>}/>
-                            <Route path="/login" element={<Login/>}/>
+                            <Route path="/login" element={<Auth />}/>
                             <Route path="/protected" element={<ProtectedPage/>}/>
                             <Route path="/chess" element={<ChessBoard/>}/>
                             <Route path="/howToPlay" element={<RulesPage/>}/>
