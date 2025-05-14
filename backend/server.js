@@ -31,7 +31,7 @@ const io = new Server(server, {
         methods: ["GET", "POST"],
     },
 });
-
+//
 // Connect to MongoDB
 connectDB(process.env.MONGO_URI);
 
@@ -112,6 +112,28 @@ chatNamespace.on("connection", (socket) => {
 
     socket.on("disconnect", () => {
         console.log("[CHAT] User disconnected:", socket.id);
+    });
+});
+
+const onlineUsers = new Map(); // socket.id -> username
+
+io.on("connection", (socket) => {
+    socket.on("register_user", async (userId) => {
+        onlineUsers.set(socket.id, userId);
+
+        // Get this user's friends from Mongo
+        const user = await User.findById(userId).populate("friends", "username");
+        if (!user) return;
+
+        const onlineFriendNames = user.friends
+            .filter((friend) => [...onlineUsers.values()].includes(friend._id.toString()))
+            .map((friend) => friend.username);
+
+        socket.emit("online_friends", onlineFriendNames);
+    });
+
+    socket.on("disconnect", () => {
+        onlineUsers.delete(socket.id);
     });
 });
 

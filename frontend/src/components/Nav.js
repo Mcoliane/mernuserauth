@@ -1,5 +1,6 @@
 import React from "react";
 import Logo from '../assets/icon.png';
+import LogoutButton from "./LogoutButton";
 import {
     Navbar,
     NavbarBrand,
@@ -166,7 +167,7 @@ export default function NavComp() {
                             <Link href="/profile">My Profile</Link>
                         </DropdownItem>
                         <DropdownItem key="logout" color="danger">
-                            Log Out
+                            <LogoutButton />
                         </DropdownItem>
                     </DropdownMenu>
                 </Dropdown>

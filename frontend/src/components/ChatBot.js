@@ -26,6 +26,23 @@ export default function Chat() {
 
     const username = useRef(`User${Math.floor(Math.random() * 1000)}`).current;
 
+    const [onlineUsers, setOnlineUsers] = useState([]);
+
+    useEffect(() => {
+        // Register this user when the component mounts
+        socket.emit("register_user", username);
+
+        // Listen for updated online user list
+        socket.on("online_users", (users) => {
+            setOnlineUsers(users);
+        });
+
+        return () => {
+            socket.off("online_users");
+        };
+    }, []);
+
+
     useEffect(() => {
         socket.on("receive_message", (data) => {
             const decryptedText = decryptMessage(data.text);
@@ -76,7 +93,7 @@ export default function Chat() {
             onClick={() => setIsOpen(true)}
             className="bg-yellow-500 text-black w-80 px-4 py-2 rounded-t-xl rounded-br-xl shadow-lg hover:bg-yellow-400 transition"
         >
-            Chat (2 online)
+            Chat ({onlineUsers.length} online)
         </button>) : (<div className="bg-black/80 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden">
             {/* Header */}
             <div className="flex justify-between items-center bg-yellow-500 text-black px-4 py-2">
