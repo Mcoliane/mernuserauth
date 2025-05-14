@@ -16,7 +16,7 @@ const ChessGameMode = forwardRef(({ mode }, ref) => {
         const state = gameRef.current.exportJson();
 
         if (state.checkMate) {
-            const winner = state.turn === 1 ? "Black" : "White";  // Turn is on loser
+            const winner = state.turn === 1 ? "White" : "Black";  // Turn is on loser
             alert(`${winner} wins by checkmate!`);
             return true;
         }
