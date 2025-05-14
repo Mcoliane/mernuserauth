@@ -5,7 +5,7 @@ import Register from './components/Register';
 import Login from './components/Login';
 import ProtectedPage from './components/ProtectedPage';
 import NavComp from './components/Nav';
-import ChessBoard from "./components/Chess";
+import ChessRouter from "./components/ChessRouter";
 import Chat from "./components/ChatBot";
 import {HeroUIProvider} from "@heroui/react";
 import UserProfile from "./components/Profile";
@@ -31,7 +31,7 @@ function App() {
                             <Route path="/register" element={<Register/>}/>
                             <Route path="/login" element={<Login/>}/>
                             <Route path="/protected" element={<ProtectedPage/>}/>
-                            <Route path="/chess" element={<ChessBoard/>}/>
+                            <Route path="/chess" element={<ChessRouter/>}/>
                             <Route path="/howToPlay" element={<RulesPage/>}/>
                             <Route path="/tournaments" element={<Tournament/>}/>
                             <Route path="/friends" element={<FriendsList/>}/>
