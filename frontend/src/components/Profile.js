@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from "../config/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, updatePassword, signOut } from "firebase/auth";
 import {
     Tabs, Tab, CardBody, Input, Button, Avatar, Divider, Form
 } from '@heroui/react';
@@ -10,6 +10,8 @@ const UserProfile = () => {
     const [selectedTab, setSelectedTab] = useState('profile');
     const [formData, setFormData] = useState({ name: '', email: '', bio: '' });
     const [isEditing, setIsEditing] = useState(false);
+    const [newPassword, setNewPassword] = useState('');
+    const [passwordMessage, setPasswordMessage] = useState('');
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -18,7 +20,7 @@ const UserProfile = () => {
                     name: user.displayName || '',
                     email: user.email || '',
                     bio: '',
-                    avatar: user.photoURL || '',
+                    avatar: user.photoURL || 'https://via.placeholder.com/150',
                     uid: user.uid,
                     bestTime: '3:22',
                     highScore: '2200',
@@ -53,13 +55,33 @@ const UserProfile = () => {
         setIsEditing(false);
     };
 
+    const handleChangePassword = async () => {
+        try {
+            await updatePassword(auth.currentUser, newPassword);
+            setPasswordMessage("Password updated successfully.");
+            setNewPassword("");
+        } catch (error) {
+            console.error("Error updating password:", error);
+            setPasswordMessage("Failed to update password. Please re-authenticate and try again.");
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            window.location.href = "/login"; // Redirect after logout
+        } catch (error) {
+            console.error("Error signing out:", error);
+        }
+    };
+
     return (
         <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 to-black p-6">
             <div className="min-w-screen min-h-screen md:w-3/4 lg:w-2/3 bg-gradient-to-br from-[#253C3F] to-black text-white rounded-xl shadow-lg p-8">
                 <div className="flex items-center gap-6 mb-6">
                     <Avatar
                         className="w-24 h-24 border-4 border-yellow-500"
-                        src={currentUser.avatar || 'https://via.placeholder.com/150'}
+                        src={currentUser.avatar}
                         alt="Profile picture"
                     />
                     <div>
@@ -106,15 +128,15 @@ const UserProfile = () => {
                             <Input
                                 name="name"
                                 value={formData.name}
-                                onChange={handleChange}
-                                className="bg-gray-800 text-white border border-gray-600 rounded-md"
+                                readOnly
+                                className="bg-gray-800 text-white border border-gray-600 rounded-md opacity-50 cursor-not-allowed"
                             />
                             <label>Email</label>
                             <Input
                                 name="email"
                                 value={formData.email}
-                                onChange={handleChange}
-                                className="bg-gray-800 text-white border border-gray-600 rounded-md"
+                                readOnly
+                                className="bg-gray-800 text-white border border-gray-600 rounded-md opacity-50 cursor-not-allowed"
                             />
                             <label>Bio</label>
                             <Input
@@ -156,10 +178,28 @@ const UserProfile = () => {
                     {selectedTab === 'settings' && (
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold">Settings</h3>
-                            <p className="text-gray-400">This section can include notification preferences, theme, and password change in the future.</p>
+                            <p className="text-gray-400">Update your password below.</p>
+                            <Input
+                                type="password"
+                                placeholder="New Password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                className="bg-gray-800 text-white border border-gray-600 rounded-md"
+                            />
+                            <Button
+                                color="primary"
+                                onPress={handleChangePassword}
+                                className="bg-yellow-500 hover:bg-yellow-400 text-black font-semibold"
+                            >
+                                Change Password
+                            </Button>
+                            {passwordMessage && (
+                                <p className="text-sm text-green-400">{passwordMessage}</p>
+                            )}
                             <Button
                                 color="danger"
                                 variant="light"
+                                onPress={handleLogout}
                                 className="bg-red-500 hover:bg-red-400 text-white font-semibold"
                             >
                                 Log out
