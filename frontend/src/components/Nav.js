@@ -3,6 +3,7 @@ import Logo from '../assets/icon.png';
 import LogoutButton from "./LogoutButton";
 import { auth } from "../config/firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import FriendSearchBar from "./friendSearchBar";
 import {
     Navbar,
     NavbarBrand,
@@ -29,6 +30,7 @@ export default function NavComp() {
                     email: currentUser.email || "",
                     photoURL: currentUser.photoURL || "https://i.pravatar.cc/150?u=default",
                 });
+
             } else {
                 setUser(null);
             }
@@ -69,13 +71,13 @@ export default function NavComp() {
                     </NavbarItem>
                     <DropdownMenu aria-label="Game features" className="bg-white border border-gray-200 shadow-lg rounded-lg p-2">
                         <DropdownItem key="chess"><Link href="/chess">Chess</Link></DropdownItem>
-                        <DropdownItem key="rules"><Link href="/howToPlay">Game Rules</Link></DropdownItem>
-                        <DropdownItem key="game3">Game 3</DropdownItem>
-                        <DropdownItem key="game4">Game 4</DropdownItem>
+                        <DropdownItem key="game2"><Link>Coming Soon</Link></DropdownItem>
+                        <DropdownItem key="game3">Coming Soon</DropdownItem>
+                        <DropdownItem key="game4">Coming Soon</DropdownItem>
                     </DropdownMenu>
                 </Dropdown>
 
-                <NavbarItem><Link href="/protected" className="hover:text-yellow-600 transition-colors duration-300 font-medium">Protected</Link></NavbarItem>
+                <NavbarItem><Link href="/howToPlay" className="hover:text-yellow-600 transition-colors duration-300 font-medium">Game Rules</Link></NavbarItem>
                 <NavbarItem><Link href="/tournaments" className="hover:text-yellow-600 transition-colors duration-300 font-medium">Tournaments</Link></NavbarItem>
                 <NavbarItem><Link href="/friends" className="hover:text-yellow-600 transition-colors duration-300 font-medium">Friends</Link></NavbarItem>
                 {!user && (
@@ -84,6 +86,9 @@ export default function NavComp() {
                             Login
                         </Link>
                     </NavbarItem>
+                )}
+                {user && (
+                    <FriendSearchBar />
                 )}
             </NavbarContent>
 

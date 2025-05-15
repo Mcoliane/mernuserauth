@@ -10,6 +10,26 @@ const UserProfile = () => {
     const [selectedTab, setSelectedTab] = useState('profile');
     const [formData, setFormData] = useState({ name: '', email: '', bio: '' });
     const [isEditing, setIsEditing] = useState(false);
+    const [inviteCode, setInviteCode] = useState(null);
+
+    useEffect(() => {
+        if (!currentUser?.uid) return;
+
+        const fetchInvite = async () => {
+            try {
+                const res = await fetch(`http://localhost:5001/api/users/${currentUser.uid}`);
+                const data = await res.json();
+                if (!data.error) {
+                    setInviteCode(data.inviteCode); // ← you get it here
+                }
+            } catch (err) {
+                console.error("Failed to fetch invite code", err);
+            }
+        };
+
+        fetchInvite();
+    }, [currentUser?.uid]);
+
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -123,6 +143,7 @@ const UserProfile = () => {
                                 onChange={handleChange}
                                 className="bg-gray-800 text-white border border-gray-600 rounded-md"
                             />
+
                             <div className="flex justify-end gap-2">
                                 <Button
                                     color="success"
@@ -142,7 +163,7 @@ const UserProfile = () => {
                             </div>
                         </Form>
                     ))}
-
+                    <p><span className="font-semibold">Invite Code:</span> {inviteCode || "Loading..."}</p>
                     {selectedTab === 'stats' && (
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold">Chess Stats</h3>
@@ -156,7 +177,8 @@ const UserProfile = () => {
                     {selectedTab === 'settings' && (
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold">Settings</h3>
-                            <p className="text-gray-400">This section can include notification preferences, theme, and password change in the future.</p>
+                            <p className="text-gray-400">This section can include notification preferences, theme, and
+                                password change in the future.</p>
                             <Button
                                 color="danger"
                                 variant="light"
