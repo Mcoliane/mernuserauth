@@ -5,8 +5,8 @@ const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/Auth');
 const requireAuth = require('./middleware/auth');
+const registerUser = require('./models/users');
 const CryptoJS = require("crypto-js");
-
 const SECRET_KEY = "your_shared_secret_key";
 
 // Online connection
@@ -31,21 +31,25 @@ const io = new Server(server, {
         methods: ["GET", "POST"],
     },
 });
-//
-// Connect to MongoDB
-connectDB(process.env.MONGO_URI);
+// //
+// // Connect to MongoDB
+// connectDB(process.env.MONGO_URI);
+// Initialize Firebase Admin SDK in server.js
+
 
 // Middleware
 app.use(cookieParser());
 app.use(express.json());
 
-// Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/users', require("./models/users"));
+// // Routes
+// app.use('/api/auth', authRoutes);
+//
+// // Example protected route
+// app.get('/api/protected', requireAuth, (req, res) => {
+//     res.status(200).json({ message: 'You have accessed a protected route!', userId: req.userId });
+// });
 
-// Example protected route
-app.get('/api/protected', requireAuth, (req, res) => {
-    res.status(200).json({ message: 'You have accessed a protected route!', userId: req.userId });
-});
 
 // =======================
 // 🎯 GAME NAMESPACE LOGIC

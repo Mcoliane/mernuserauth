@@ -1,43 +1,49 @@
-// models/PlayerRating.js
-const mongoose = require('mongoose');
+const { db } = require("../config/firebaseAdmin");
+const { applyElo } = require("./elo");
 
-const playerRatingSchema = new mongoose.Schema(
-  {
-    user:        { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true, required: true },
-    rating:      { type: Number, default: 1200 },
-    rd:          { type: Number, default: 350 },          // Rating deviation (Glicko / Glicko-2)
-    gamesPlayed: { type: Number, default: 0 },
-    updatedAt:   { type: Date,   default: Date.now }
-  },
-  { versionKey: false } // we don’t need __v for this doc
-);
+// Set initial rating when user signs up
+async function setInitialPlayerRating(uid) {
+    const ratingRef = db.ref(`users/${uid}/stats`);
+    await ratingRef.set({
+        rating: 1200,
+        rd: 350,
+        gamesPlayed: 0,
+        updatedAt: new Date().toISOString()
+    });
+}
 
-/* --------------------------------------------------------- *
- *  Static helpers                                           *
- * --------------------------------------------------------- */
 
-/** Create an initial rating doc (call right after a user signs up) */
-playerRatingSchema.statics.bootstrapForUser = async function (userId) {
-  return this.create({ user: userId });
-};
+// Update a single player's rating (used internally)
+async function updateSingleRating(uid, newRating, gamesPlayed) {
+    const ref = db.ref(`users/${uid}/stats`);
+    await ref.update({
+        rating: newRating,
+        gamesPlayed,
+        updatedAt: new Date().toISOString()
+    });
+}
 
-/* --------------------------------------------------------- *
- *  Instance helpers                                         *
- * --------------------------------------------------------- */
+// Get current rating from DB
+async function getRating(uid) {
+    const snapshot = await db.ref(`users/${uid}/stats`).once("value");
+    if (!snapshot.exists()) throw new Error(`No stats for uid: ${uid}`);
+    return snapshot.val();
+}
 
-/**
- * Update Elo ratings for   this   player vs an opponent.
- * @param {Number} opponentRating – their current Elo
- * @param {Number} score          – 1 = win, 0.5 = draw, 0 = loss
- * @param {Number} [k=32]         – K-factor (tune to taste)
- * @returns {Number} new rating   – *rounded* to an int
- */
-playerRatingSchema.methods.applyElo = function (opponentRating, score, k = 32) {
-  const expected = 1 / (1 + Math.pow(10, (opponentRating - this.rating) / 400));
-  this.rating = Math.round(this.rating + k * (score - expected));
-  this.gamesPlayed += 1;
-  this.updatedAt = new Date();
-  return this.rating;
-};
+async function updatePlayerRating(uid, opponentRating, score) {
+    const userRef = db.ref(`users/${uid}/stats`);
+    const snapshot = await userRef.once("value");
 
-module.exports = mongoose.model('PlayerRating', playerRatingSchema);
+    if (!snapshot.exists()) return;
+
+    const data = snapshot.val();
+    const newRating = applyElo(data.rating, opponentRating, score);
+
+    await userRef.update({
+        rating: newRating,
+        gamesPlayed: (data.gamesPlayed || 0) + 1,
+        updatedAt: new Date().toISOString()
+    });
+}
+
+module.exports = { setInitialPlayerRating, updatePlayerRating };

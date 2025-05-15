@@ -1,6 +1,6 @@
 // socketHandlers.js
 const {rooms} = require("./rooms");
-
+const { updatePlayerRating } = require("../models/playerRating");
 const handleRoomJoin = (socket, io, rooms) => {
     socket.on('join-room', (roomCode) => {
         console.log(`Room join request received for room ${roomCode}`);
@@ -24,14 +24,18 @@ const handleRoomJoin = (socket, io, rooms) => {
 };
 
 
-const handleRankedQueue = (socket, io, rooms, waitingPlayer) => {
-    socket.on("join-ranked-queue", () => {
-        if (socket.isInQueue) return;
+const handleRankedQueue = (socket, io, rooms, waitingPlayerWrapper) => {
+    socket.on("join-ranked-queue", ({ uid }) => {
+        if (socket.isInQueue || !uid) return;
+
         socket.isInQueue = true;
+        socket.uid = uid; // Store UID on socket
+
+        const waitingPlayer = waitingPlayerWrapper.player;
 
         if (waitingPlayer && waitingPlayer.id !== socket.id) {
             const opponent = waitingPlayer;
-            waitingPlayer = null;
+            waitingPlayerWrapper.player = null;
 
             const room = `ranked-${socket.id}-${opponent.id}`;
             socket.join(room);
@@ -41,47 +45,49 @@ const handleRankedQueue = (socket, io, rooms, waitingPlayer) => {
             const white = assignWhite ? socket : opponent;
             const black = assignWhite ? opponent : socket;
 
-            white.emit("ranked-match-found", {assignedColor: "w"});
-            black.emit("ranked-match-found", {assignedColor: "b"});
+            white.emit("ranked-match-found", { assignedColor: "w" });
+            black.emit("ranked-match-found", { assignedColor: "b" });
 
-            // Clear their in-queue flags
             white.isInQueue = false;
             black.isInQueue = false;
 
-            // Track the current turn (White starts)
-            let currentTurn = "w"; // "w" is White, "b" is Black
-            const boardState = {}; // Add your board state representation here (FEN or move history)
+            const sockets = { w: white, b: black };
+            const uids = { w: white.uid, b: black.uid };
 
-            // Handle move events
+            let currentTurn = "w";
+
             [white, black].forEach((player) => {
-                player.on("move", ({from, to}) => {
-                    // Only allow the player whose turn it is to make a move
-                    if ((player === white && currentTurn !== "w") || (player === black && currentTurn !== "b")) {
-                        console.log(`Invalid move: ${from} -> ${to}, not ${player.id}'s turn`);
-                        return;
+                player.on("move", ({ from, to }) => {
+                    const playerColor = player === white ? "w" : "b";
+                    if (playerColor !== currentTurn) return;
+
+                    currentTurn = currentTurn === "w" ? "b" : "w";
+                    player.to(room).emit("move", { from, to });
+                });
+
+                player.on("ranked-game-over", async ({ winner }) => {
+                    if (winner !== "w" && winner !== "b") return;
+
+                    const loser = winner === "w" ? "b" : "w";
+                    try {
+                        await updatePlayerRating(
+                            uids[winner],
+                            uids[loser],
+                            1 // winner gets 1 point
+                        );
+                    } catch (err) {
+                        console.error("Failed to update Elo ratings:", err);
                     }
 
-                    console.log(`Move in ${room} from ${player.id}: ${from} -> ${to}`);
-
-                    // Validate the move (if applicable)
-                    // Your chess game logic here to validate the move
-
-                    // After a valid move, toggle the turn
-                    currentTurn = currentTurn === "w" ? "b" : "w";
-
-                    // Broadcast the move to the opponent
-                    player.to(room).emit("move", {from, to, boardState});
-
-                    // Update the board state (e.g., FEN or move history)
-                    // Update `boardState` here based on the move
+                    io.to(room).emit("ranked-game-over", {
+                        winner,
+                        updatedRatings
+                    });
                 });
 
-                player.on("ranked-game-over", ({winner}) => {
-                    player.to(room).emit("ranked-game-over", {winner});
-                });
             });
         } else {
-            waitingPlayer = socket;
+            waitingPlayerWrapper.player = socket;
         }
     });
 };
