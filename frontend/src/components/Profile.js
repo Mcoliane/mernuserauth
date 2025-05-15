@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from "../config/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, updatePassword, signOut } from "firebase/auth";
 import {
     Tabs, Tab, CardBody, Input, Button, Avatar, Divider, Form
 } from '@heroui/react';
@@ -10,26 +10,6 @@ const UserProfile = () => {
     const [selectedTab, setSelectedTab] = useState('profile');
     const [formData, setFormData] = useState({ name: '', email: '', bio: '' });
     const [isEditing, setIsEditing] = useState(false);
-    const [inviteCode, setInviteCode] = useState(null);
-
-    useEffect(() => {
-        if (!currentUser?.uid) return;
-
-        const fetchInvite = async () => {
-            try {
-                const res = await fetch(`http://localhost:5001/api/users/${currentUser.uid}`);
-                const data = await res.json();
-                if (!data.error) {
-                    setInviteCode(data.inviteCode); // ← you get it here
-                }
-            } catch (err) {
-                console.error("Failed to fetch invite code", err);
-            }
-        };
-
-        fetchInvite();
-    }, [currentUser?.uid]);
-
     const [newPassword, setNewPassword] = useState('');
     const [passwordMessage, setPasswordMessage] = useState('');
 
@@ -101,7 +81,7 @@ const UserProfile = () => {
                 <div className="flex items-center gap-6 mb-6">
                     <Avatar
                         className="w-24 h-24 border-4 border-yellow-500"
-                        src={currentUser.avatar || 'https://via.placeholder.com/150'}
+                        src={currentUser.avatar}
                         alt="Profile picture"
                     />
                     <div>
@@ -148,15 +128,15 @@ const UserProfile = () => {
                             <Input
                                 name="name"
                                 value={formData.name}
-                                onChange={handleChange}
-                                className="bg-gray-800 text-white border border-gray-600 rounded-md"
+                                readOnly
+                                className="bg-gray-800 text-white border border-gray-600 rounded-md opacity-50 cursor-not-allowed"
                             />
                             <label>Email</label>
                             <Input
                                 name="email"
                                 value={formData.email}
-                                onChange={handleChange}
-                                className="bg-gray-800 text-white border border-gray-600 rounded-md"
+                                readOnly
+                                className="bg-gray-800 text-white border border-gray-600 rounded-md opacity-50 cursor-not-allowed"
                             />
                             <label>Bio</label>
                             <Input
@@ -165,7 +145,6 @@ const UserProfile = () => {
                                 onChange={handleChange}
                                 className="bg-gray-800 text-white border border-gray-600 rounded-md"
                             />
-
                             <div className="flex justify-end gap-2">
                                 <Button
                                     color="success"
@@ -185,7 +164,7 @@ const UserProfile = () => {
                             </div>
                         </Form>
                     ))}
-                    <p><span className="font-semibold">Invite Code:</span> {inviteCode || "Loading..."}</p>
+
                     {selectedTab === 'stats' && (
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold">Chess Stats</h3>
