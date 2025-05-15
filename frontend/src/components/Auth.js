@@ -7,7 +7,8 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signInWithPopup,
-    signOut
+    signOut,
+    onAuthStateChanged
 } from "firebase/auth";
 import { Tabs, Tab, Card, CardBody, Form, Input, Button } from "@heroui/react";
 import { useNavigate } from "react-router-dom";
@@ -34,6 +35,36 @@ export const Auth = () => {
 
     const signUp = async (e) => {
         e.preventDefault();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [username, setUsername] = useState("");
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const API_BASE = "http://localhost:5001";
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            setIsLoggedIn(!!user);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const showAlert = (message) => {
+        window.alert(message);
+    };
+
+    const validateFields = () => {
+        if (!email.trim() || !password.trim()) {
+            showAlert("Email and password are required.");
+            return false;
+        }
+        return true;
+    };
+
+    const signUp = async () => {
+        if (!validateFields() || !username.trim()) {
+            showAlert("All fields are required to sign up.");
+            return;
+        }
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
             const user = userCredential.user;
@@ -44,21 +75,30 @@ export const Auth = () => {
             });
             showPopup("Registration successful!");
             setTab("login");
+            showAlert("Account created successfully!");
+            window.location.href = "/";
         } catch (err) {
             console.error("Signup error:", err);
             showPopup("Registration failed.", false);
+            showAlert("Failed to create account: " + err.message);
         }
     };
 
     const signIn = async (e) => {
         e.preventDefault();
+    const signIn = async () => {
+        if (!validateFields()) return;
         try {
+            await signInWithEmailAndPassword(auth, email, password);
+            showAlert("Signed in successfully!");
+            window.location.href = "/";
             await signInWithEmailAndPassword(auth, formData.email, formData.password);
             showPopup("Login successful!");
             setTimeout(() => navigate("/"), 1000); // Give popup time to show
         } catch (err) {
             console.error("Signin error:", err);
             showPopup("Login failed.", false);
+            showAlert("Failed to sign in: " + err.message);
         }
     };
 
@@ -66,6 +106,9 @@ export const Auth = () => {
         try {
             const result = await signInWithPopup(auth, googleProvider);
             const { isNewUser } = result._tokenResponse || {};
+            if (isNewUser) {
+                const user = result.user;
+                const googleUsername = user.displayName || user.email.split("@")[0] || "Unnamed";
             const user = result.user;
 
             if (isNewUser) {
@@ -79,8 +122,11 @@ export const Auth = () => {
 
             showPopup("Signed in with Google!");
             setTimeout(() => navigate("/"), 1000);
+            showAlert("Signed in with Google successfully!");
+            window.location.href = "/";
         } catch (err) {
             console.error("Google sign-in error:", err);
+            showAlert("Google sign-in failed: " + err.message);
             showPopup("Google sign-in failed.", false);
         }
     };
@@ -90,10 +136,14 @@ export const Auth = () => {
         try {
             await signOut(auth);
             showPopup("Logged out.");
+            showAlert("Logged out successfully.");
         } catch (err) {
             console.error("Logout error:", err);
+            showAlert("Logout failed: " + err.message);
         }
     };
+
+
 
     return (
         <main className="flex min-w-screen min-h-screen">

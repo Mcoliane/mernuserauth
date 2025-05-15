@@ -30,6 +30,8 @@ const UserProfile = () => {
         fetchInvite();
     }, [currentUser?.uid]);
 
+    const [newPassword, setNewPassword] = useState('');
+    const [passwordMessage, setPasswordMessage] = useState('');
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -38,7 +40,7 @@ const UserProfile = () => {
                     name: user.displayName || '',
                     email: user.email || '',
                     bio: '',
-                    avatar: user.photoURL || '',
+                    avatar: user.photoURL || 'https://via.placeholder.com/150',
                     uid: user.uid,
                     bestTime: '3:22',
                     highScore: '2200',
@@ -71,6 +73,26 @@ const UserProfile = () => {
     const handleSave = () => {
         console.log('Saved profile:', formData);
         setIsEditing(false);
+    };
+
+    const handleChangePassword = async () => {
+        try {
+            await updatePassword(auth.currentUser, newPassword);
+            setPasswordMessage("Password updated successfully.");
+            setNewPassword("");
+        } catch (error) {
+            console.error("Error updating password:", error);
+            setPasswordMessage("Failed to update password. Please re-authenticate and try again.");
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            window.location.href = "/login"; // Redirect after logout
+        } catch (error) {
+            console.error("Error signing out:", error);
+        }
     };
 
     return (
@@ -177,11 +199,28 @@ const UserProfile = () => {
                     {selectedTab === 'settings' && (
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold">Settings</h3>
-                            <p className="text-gray-400">This section can include notification preferences, theme, and
-                                password change in the future.</p>
+                            <p className="text-gray-400">Update your password below.</p>
+                            <Input
+                                type="password"
+                                placeholder="New Password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                className="bg-gray-800 text-white border border-gray-600 rounded-md"
+                            />
+                            <Button
+                                color="primary"
+                                onPress={handleChangePassword}
+                                className="bg-yellow-500 hover:bg-yellow-400 text-black font-semibold"
+                            >
+                                Change Password
+                            </Button>
+                            {passwordMessage && (
+                                <p className="text-sm text-green-400">{passwordMessage}</p>
+                            )}
                             <Button
                                 color="danger"
                                 variant="light"
+                                onPress={handleLogout}
                                 className="bg-red-500 hover:bg-red-400 text-white font-semibold"
                             >
                                 Log out
