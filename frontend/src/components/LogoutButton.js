@@ -1,29 +1,22 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from "react";
+import { signOut } from "firebase/auth";
+import { auth } from "../config/firebase";
 
-function LogoutButton() {
-  const navigate = useNavigate();
-
+export default function LogoutButton() {
   const handleLogout = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
-      if (response.ok) {
-        // For a simple approach, just redirect to Home or Login after logout:
-        navigate('/');
-      } else {
-        console.log('Logout error:', await response.json());
-      }
+      await signOut(auth);
+      console.log("User signed out");
+      // Optional: Redirect after logout
+      window.location.href = "/login";
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Error signing out:", error);
     }
   };
 
   return (
-    <button onClick={handleLogout}>Logout</button>
+      <button onClick={handleLogout} className="w-full text-left">
+        Log Out
+      </button>
   );
 }
-
-export default LogoutButton;
