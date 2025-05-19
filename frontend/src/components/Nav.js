@@ -3,7 +3,7 @@ import Logo from '../assets/icon.png';
 import LogoutButton from "./LogoutButton";
 import { auth } from "../config/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import FriendSearchBar from "./friendSearchBar";
+
 import {
     Navbar,
     NavbarBrand,
@@ -87,9 +87,7 @@ export default function NavComp() {
                         </Link>
                     </NavbarItem>
                 )}
-                {user && (
-                    <FriendSearchBar />
-                )}
+
             </NavbarContent>
 
             {/* Profile Avatar */}

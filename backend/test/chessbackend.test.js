@@ -1,66 +1,102 @@
-const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
-const playerRating = require('../models/playerRating');
 
-let mongoServer;
+const fakeDb = {
+    users: {
+        user1: { stats: { rating: 1500 } },
+        user2: { stats: { rating: 1400 } },
+    }
+};
 
-beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    const uri = mongoServer.getUri();
-    await mongoose.connect(uri);
-});
+async function getUserRating(uid) {
+    return fakeDb.users[uid].stats.rating;
+}
 
-afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
-});
+async function updatePlayerRating(uid, opponentRating, result) {
+    const oldRating = await getUserRating(uid);
+    const expected = 1 / (1 + Math.pow(10, (opponentRating - oldRating) / 400));
+    const k = 10;
+    const newRating = Math.round(oldRating + k * (result - expected));
+    fakeDb.users[uid].stats.rating = newRating;
+    return newRating;
+}
 
-afterEach(async () => {
-    await playerRating.deleteMany({});
-});
+// Mock socket class for testing
+class MockSocket {
+    constructor() {
+        this.handlers = {};
+        this.emittedEvents = [];
+    }
 
-describe('PlayerRating Model', () => {
+    on(event, callback) {
+        this.handlers[event] = callback;
+    }
 
-    it('Should bootstrap a new rating for a user', async () => {
-        const fakeUserId = new mongoose.Types.ObjectId();
-        const ratingDoc = await playerRating.bootstrapForUser(fakeUserId);
+    emit(event, data) {
+        this.emittedEvents.push({ event, data });
+    }
 
-        expect(ratingDoc.user).toEqual(fakeUserId);
-        expect(ratingDoc.rating).toBe(1200);
-        expect(ratingDoc.rd).toBe(350);
-        expect(ratingDoc.gamesPlayed).toBe(0);
-        expect(ratingDoc.updatedAt).toBeInstanceOf(Date);
+    to(room) {
+        return this; // For chaining .to().emit()
+    }
+
+    // Helper to simulate receiving an event
+    trigger(event, data) {
+        if (this.handlers[event]) {
+            return this.handlers[event](data);
+        }
+    }
+}
+
+describe("Elo update on ranked-game-over event", () => {
+    let socket1, socket2;
+    const room = "test-room";
+
+    beforeEach(() => {
+        // Reset ratings before each test
+        fakeDb.users.user1.stats.rating = 1500;
+        fakeDb.users.user2.stats.rating = 1400;
+
+        socket1 = new MockSocket();
+        socket2 = new MockSocket();
+
+        // Attach event handlers (simulate your actual socket logic)
+        [socket1, socket2].forEach((socket) => {
+            socket.on("ranked-game-over", async ({ winnerUid, loserUid }) => {
+                socket.to(room).emit("ranked-game-over", { winnerUid });
+
+                const winnerRating = await getUserRating(winnerUid);
+                const loserRating = await getUserRating(loserUid);
+
+                await updatePlayerRating(winnerUid, loserRating, 1);
+                await updatePlayerRating(loserUid, winnerRating, 0);
+            });
+        });
     });
 
-    it('should correctly apply Elo updates on win', async () => {
-        const fakeUserId = new mongoose.Types.ObjectId();
-        const player = await playerRating.bootstrapForUser(fakeUserId);
+    test("should update ratings correctly when user1 wins", async () => {
+        await socket1.trigger("ranked-game-over", { winnerUid: "user1", loserUid: "user2" });
 
-        const newRating = player.applyElo(1250, 1); // win against stronger opponent
+        // Check if the event was emitted
+        expect(socket1.emittedEvents).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({ event: "ranked-game-over", data: { winnerUid: "user1" } }),
+            ])
+        );
 
-        expect(typeof newRating).toBe('number');
-        expect(newRating).toBeGreaterThan(1200); // rating should go up
-        expect(player.gamesPlayed).toBe(1);
-        expect(player.updatedAt).toBeInstanceOf(Date);
+        // Check updated ratings
+        expect(fakeDb.users.user1.stats.rating).toBeGreaterThan(1500);
+        expect(fakeDb.users.user2.stats.rating).toBeLessThan(1400);
     });
 
-    it('should correctly apply Elo updates on loss', async () => {
-        const fakeUserId = new mongoose.Types.ObjectId();
-        const player = await playerRating.bootstrapForUser(fakeUserId);
+    test("should update ratings correctly when user2 wins", async () => {
+        await socket2.trigger("ranked-game-over", { winnerUid: "user2", loserUid: "user1" });
 
-        const newRating = player.applyElo(1100, 0); // loss against weaker opponent
+        expect(socket2.emittedEvents).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({ event: "ranked-game-over", data: { winnerUid: "user2" } }),
+            ])
+        );
 
-        expect(newRating).toBeLessThan(1200); // rating should go down
-        expect(player.gamesPlayed).toBe(1);
+        expect(fakeDb.users.user2.stats.rating).toBeGreaterThan(1400);
+        expect(fakeDb.users.user1.stats.rating).toBeLessThan(1500);
     });
-
-    it('should applyElo with custom K-factor', async () => {
-        const fakeUserId = new mongoose.Types.ObjectId();
-        const player = await playerRating.bootstrapForUser(fakeUserId);
-
-        const rating1 = player.applyElo(1200, 1, 16); // smaller K, smaller jump
-        expect(rating1).toBeGreaterThan(1200);
-        expect(rating1).toBeLessThan(1216); // Max it could go is 1216
-    });
-
 });

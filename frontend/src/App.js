@@ -13,7 +13,7 @@ import UserProfile from "./components/Profile";
 import Footer from './components/Footer';
 import RulesPage from "./components/RulesPage";
 import Tournament from "./components/Tournament";
-import FriendsList from "./components/FriendsList";
+import FriendsList from "./components/Friends";
 import TournamentSignUp from "./components/TournamentSignUp";
 
 function App() {

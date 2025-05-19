@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const friendRoutes = require('./routes/friends');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/Auth');
 const requireAuth = require('./middleware/auth');
@@ -42,6 +43,7 @@ app.use(cookieParser());
 app.use(express.json());
 
 app.use('/api/users', require("./models/users"));
+app.use('/api/friends', friendRoutes);
 // // Routes
 // app.use('/api/auth', authRoutes);
 //
@@ -60,7 +62,7 @@ gameNamespace.on('connection', (socket) => {
 
     // Initial handlers
     handleRoomJoin(socket, io, rooms);
-    handleRankedQueue(socket, io, rooms, waitingPlayer);
+    handleRankedQueue(socket, io, rooms);
 
     // 🔁 Move sync
     socket.on('move', ({ room, from, to, promotion }) => {

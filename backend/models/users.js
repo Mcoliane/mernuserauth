@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { db } = require("../config/firebaseAdmin");
+
 const { setInitialPlayerRating, updatePlayerRating } = require("./playerRating");
 const { addFriend, addFriendByUsername} = require('./addFriend');
 
@@ -11,20 +12,20 @@ const generateShortCode = () => {
     }
     return code.substring(0, 6).toUpperCase();
 };
-router.get("/:uid", async (req, res) => {
+
+router.get('/:uid', async (req, res) => {
+    const { uid } = req.params;
     try {
-        const userRef = db.ref(`users/${req.params.uid}`);
-        const snapshot = await userRef.once("value");
-
-        if (!snapshot.exists()) {
-            return res.status(404).json({ error: "User not found" });
-        }
-
-        res.json(snapshot.val());
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+        const snapshot = await db.ref(`users/${uid}/username`).once('value');
+        const username = snapshot.val();
+        if (!username) return res.status(404).json({ error: 'User not found' });
+        res.json({ username });
+    } catch (error) {
+        console.error('Error fetching username:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
 // Register user (this would be called after Firebase Auth registration on the frontend)
 router.post("/register", async (req, res) => {
     const { uid, username, email } = req.body;
@@ -38,7 +39,7 @@ router.post("/register", async (req, res) => {
             email,
             bio: "",
             friends: {},
-            stats: {}, // placeholder, will be populated below
+            stats: {},
             inviteCode,
         });
         console.log("Generated invite code:", inviteCode);
@@ -66,27 +67,6 @@ router.post("/update-elo", async (req, res) => {
     } catch (err) {
         console.error("Error updating Elo:", err);
         res.status(500).json({ error: "Failed to update Elo" });
-    }
-});
-router.post("/add-friend-by-code", async (req, res) => {
-    const { userUid, inviteCode } = req.body;
-
-    try {
-        // Find user by inviteCode field
-        const usersSnap = await db.ref("users").orderByChild("inviteCode").equalTo(inviteCode).once("value");
-        if (!usersSnap.exists()) {
-            return res.status(404).json({ error: "User with that code not found" });
-        }
-
-        const friendUid = Object.keys(usersSnap.val())[0];
-
-        // Add mutual friendship
-        await db.ref(`users/${userUid}/friends/${friendUid}`).set(true);
-        await db.ref(`users/${friendUid}/friends/${userUid}`).set(true);
-
-        res.json({ message: "Friend added successfully" });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
     }
 });
 

@@ -19,6 +19,8 @@ function OnlineGameMode() {
     const [error, setError] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [gameOver, setGameOver] = useState(false);
+    const [winner, setWinner] = useState(null);
+
 
     useEffect(() => {
         chessRef.current = new Chess();
@@ -53,8 +55,10 @@ function OnlineGameMode() {
 
         socket.on("game-over", ({ winner }) => {
             setGameOver(true);
+            setWinner(winner);
             toast.success(`Game over! Winner: ${winner}`);
         });
+
 
         socket.on("opponent-left", () => {
             setGameOver(true);
@@ -142,10 +146,12 @@ function OnlineGameMode() {
 
             if (chessRef.current.isGameOver()) {
                 setGameOver(true);
-                const winner = chessRef.current.turn() === "w" ? "Black" : "White";
+                const winnerName = chessRef.current.turn() === "w" ? "Black" : "White";
+                setWinner(winnerName);
                 toast.success(`You won!`);
-                socket.emit("game-over", { room, winner });
+                socket.emit("game-over", { room, winner: winnerName });
             }
+
         }
 
         return !!move;
@@ -206,11 +212,16 @@ function OnlineGameMode() {
                 <p className="text-lg font-medium">
                     You are playing as <span className="uppercase font-bold">{color}</span>
                 </p>
+                {gameOver && winner && (
+                    <div className="text-xl font-bold text-green-400 mt-4">
+                        Game Over! Winner: {winner}
+                    </div>
+                )}
                 <Chessboard
                     position={gameFen}
                     onPieceDrop={onDrop}
                     boardOrientation={color === "w" ? "white" : "black"}
-                    borderWidth={500}
+                    boardWidth={500}
                 />
                 {gameOver && (
                     <div className="flex space-x-4 pt-4">

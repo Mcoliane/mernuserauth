@@ -106,6 +106,7 @@ const UserProfile = () => {
                     <Tab key="profile" title="Profile" />
                     <Tab key="stats" title="Game Stats" />
                     <Tab key="settings" title="Settings" />
+
                 </Tabs>
 
                 <div className="mt-6">

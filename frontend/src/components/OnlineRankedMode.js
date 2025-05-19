@@ -3,9 +3,9 @@ import {Chessboard} from "react-chessboard";
 import {Chess} from "chess.js";
 import io from "socket.io-client";
 import toast, {Toaster} from "react-hot-toast";
-import {auth} from "../config/firebase";
+import { getAuth } from "firebase/auth";
 
-const socket = io("http://localhost:5001/game", {
+const socket = io("http://localhost:5001/chess", {
     path: '/socket.io',  // this path is the default, but you may need to set it explicitly
 });
 
@@ -15,6 +15,8 @@ function OnlineRankedMode() {
     const [gameOver, setGameOver] = useState(false);
     const [matchmaking, setMatchmaking] = useState(true);
     const chessRef = useRef(new Chess());
+    const [opponentUid, setOpponentUid] = useState(null);
+
 
     const opposite = (c) => (c === "w" ? "b" : "w");
 
@@ -26,11 +28,19 @@ function OnlineRankedMode() {
     }, []);
 
     useEffect(() => {
-        socket.emit("join-ranked-queue", { uid: auth.currentUser.uid });
-        toast.loading("Searching for opponent...", { id: "match" });
+        const auth = getAuth();
+        const user = auth.currentUser;
 
-        socket.on("ranked-match-found", ({ assignedColor }) => {
+        if (user) {
+            socket.emit("join-ranked-queue", { uid: user.uid });
+        } else {
+            console.warn("No user logged in, cannot join ranked queue.");
+        }
+        toast.loading("Searching for opponent...", {id: "match"});
+
+        socket.on("ranked-match-found", ({assignedColor, opponentUid}) => {
             setColor(assignedColor);
+            setOpponentUid(opponentUid);
             chessRef.current.reset();
             setGameFen(chessRef.current.fen());
             setMatchmaking(false);
@@ -38,15 +48,17 @@ function OnlineRankedMode() {
             toast.success("Opponent found! You play as " + assignedColor);
         });
 
-        socket.on("move", ({ from, to }) => {
-            const move = chessRef.current.move({ from, to });
+        socket.on("move", ({from, to}) => {
+            const move = chessRef.current.move({from, to});
 
             if (!move) {
-                console.warn("Received illegal move:", { from, to });
+                console.warn("Received illegal move:", {from, to});
+                console.warn("Current FEN:", chessRef.current.fen());
                 return;
             }
 
-            setGameFen(chessRef.current.fen());
+            const newFen = chessRef.current.fen();
+            setGameFen(newFen);
 
             if (chessRef.current.isGameOver()) {
                 const youWon = chessRef.current.turn() !== color;
@@ -58,20 +70,13 @@ function OnlineRankedMode() {
             }
         });
 
-        socket.on("ranked-game-over", ({ winner }) => {
-            setGameOver(true);
-            const youWon = winner === color;
-            toast[youWon ? "success" : "error"](youWon ? "You won!" : "You lost!");
-        });
-
         return () => {
             socket.off("ranked-match-found");
             socket.off("move");
-            socket.off("ranked-game-over");
         };
     }, []);
 
-    const onDrop = async (sourceSquare, targetSquare) => {
+    const onDrop = (sourceSquare, targetSquare) => {
         if (gameOver || matchmaking) return false;
 
         const piece = chessRef.current.get(sourceSquare);
@@ -102,39 +107,42 @@ function OnlineRankedMode() {
 
         if (chessRef.current.isGameOver()) {
             const youWon = chessRef.current.turn() !== color;
+            const auth = getAuth();
+            const user = auth.currentUser;
             setGameOver(true);
             toast[youWon ? "success" : "error"](youWon ? "You won!" : "You lost!");
 
             socket.emit("ranked-game-over", {
-                winner: youWon ? color : opposite(color),
+                winnerUid: user.uid,
+                loserUid: opponentUid, // you'll need to save opponent's uid when match is found
             });
         }
-
 
         return true;
     };
 
     return (<>
-            <Toaster position="top-center"/>
-            <div className="flex flex-col items-center space-y-6 text-white">
-                {matchmaking ? (<p className="text-lg">Waiting for opponent...</p>) : (<>
-                        <p className="text-lg">
-                            You are playing as <strong>{color}</strong>
-                        </p>
-                        <Chessboard
-                            position={gameFen}
-                            onPieceDrop={onDrop}
-                            boardOrientation={color === "w" ? "white" : "black"}
-                        />
-                    </>)}
-                {gameOver && (<button
-                        onClick={() => window.location.href = "/"}
-                        className="mt-4 bg-red-600 hover:bg-red-500 text-white py-2 px-4 rounded-full"
-                    >
-                        Return to Menu
-                    </button>)}
-            </div>
-        </>);
+        <Toaster position="top-center"/>
+        <div className="flex flex-col items-center space-y-6 text-white">
+            {matchmaking ? (<p className="text-lg">Waiting for opponent...</p>) : (<>
+                <p className="text-lg">
+                    You are playing as <strong>{color}</strong>
+                </p>
+                <Chessboard
+                    position={gameFen}
+                    onPieceDrop={onDrop}
+                    boardOrientation={color === "w" ? "white" : "black"}
+                    boardWidth={500}
+                />
+            </>)}
+            {gameOver && (<button
+                onClick={() => window.location.href = "/chess"}
+                className="mt-4 bg-red-600 hover:bg-red-500 text-white py-2 px-4 rounded-full"
+            >
+                Return to Menu
+            </button>)}
+        </div>
+    </>);
 }
 
 export default OnlineRankedMode;
