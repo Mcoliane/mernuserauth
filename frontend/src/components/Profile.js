@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { auth } from "../config/firebase";
 import { onAuthStateChanged, updatePassword, signOut } from "firebase/auth";
 import {
-    Tabs, Tab, CardBody, Input, Button, Avatar, Divider, Form
+    Tabs, Tab, Input, Button, Avatar, Divider, Form
 } from '@heroui/react';
 
 const UserProfile = () => {

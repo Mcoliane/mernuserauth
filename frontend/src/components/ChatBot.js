@@ -40,7 +40,7 @@ export default function Chat() {
         return () => {
             socket.off("online_users");
         };
-    }, []);
+    }, [username]);
 
 
     useEffect(() => {

@@ -10,7 +10,6 @@ function ChessBoard() {
     const [mode, setMode] = useState(null);
     const [sessionKey, setSessionKey] = useState(null);
     const gameModeRef = useRef();
-    const location = useLocation();
     const navigate = useNavigate();
 
     // Read the session key from sessionStorage

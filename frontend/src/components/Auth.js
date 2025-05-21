@@ -86,14 +86,6 @@ export const Auth = () => {
     };
 
 
-    const logOut = async () => {
-        try {
-            await signOut(auth);
-            showPopup("Logged out.");
-        } catch (err) {
-            console.error("Logout error:", err);
-        }
-    };
 
     return (
         <main className="flex min-w-screen min-h-screen">

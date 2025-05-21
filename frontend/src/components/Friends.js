@@ -14,7 +14,6 @@ function FriendsComponent() {
     const [searchUsername, setSearchUsername] = useState("");
     const [searchResult, setSearchResult] = useState(null);
     const [incomingRequests, setIncomingRequests] = useState({});
-    const [friends, setFriends] = useState({});
     const [friendUsernames, setFriendUsernames] = useState({});
     const [currentUser, setCurrentUser] = useState(null);
     const userUid = getAuth().currentUser?.uid;
@@ -61,7 +60,7 @@ function FriendsComponent() {
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [db]);
 
 
     async function loadRequestsAndFriends(user) {

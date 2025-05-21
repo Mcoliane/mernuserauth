@@ -74,7 +74,7 @@ function OnlineRankedMode() {
             socket.off("ranked-match-found");
             socket.off("move");
         };
-    }, []);
+    }, [color]);
 
     const onDrop = (sourceSquare, targetSquare) => {
         if (gameOver || matchmaking) return false;

@@ -2,7 +2,6 @@ import React from 'react';
 import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
 import HomePage from './components/Home';
 import Register from './components/Register';
-import Login from './components/Login';
 import Auth from './components/Auth';
 import ProtectedPage from './components/ProtectedPage';
 import NavComp from './components/Nav';
