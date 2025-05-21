@@ -15,6 +15,11 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
+console.log("FIREBASE ENV VARS", {
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+});
+
 const app = initializeApp(firebaseConfig);
 
 // Optional: Only call analytics in browser environments
