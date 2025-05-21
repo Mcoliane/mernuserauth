@@ -14,7 +14,8 @@ const decryptMessage = (cipherText) => {
     return bytes.toString(CryptoJS.enc.Utf8);
 };
 
-const socket = io("http://localhost:5001/chat");
+const socket = io(process.env.REACT_APP_SOCKET_URL || "http://localhost:5001/chat");
+
 
 export default function Chat() {
     const [message, setMessage] = useState("");
