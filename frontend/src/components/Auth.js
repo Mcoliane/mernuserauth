@@ -7,7 +7,6 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signInWithPopup,
-    signOut
 } from "firebase/auth";
 import { Tabs, Tab, Card, CardBody, Form, Input, Button } from "@heroui/react";
 import { useNavigate } from "react-router-dom";
