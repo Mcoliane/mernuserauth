@@ -14,7 +14,7 @@
     "chess.js": "^1.2.0",
     "crypto-js": "^4.2.0",
     "emoji-picker-react": "^4.12.2",
-    "firebase": "^11.7.2",
+    "firebase": "^11.8.0",
     "framer-motion": "^12.7.3",
     "js-chess-engine": "^1.0.2",
     "react": "^18.2.0",

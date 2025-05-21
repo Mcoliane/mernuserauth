@@ -75,11 +75,11 @@ function FriendsComponent() {
             const data = await response.json();
             usernames[uid] = data.username || uid;
         }
-        setFriends(usernames);
 
 
         setIncomingRequests(incoming);
-        setFriends(usernames); // now contains uid => username
+        setFriendUsernames(usernames);
+        
     }
 
 
