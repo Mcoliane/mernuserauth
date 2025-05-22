@@ -10,6 +10,9 @@ const registerUser = require('./models/users');
 const CryptoJS = require("crypto-js");
 const SECRET_KEY = "your_shared_secret_key";
 
+// ✅ ADD THIS
+const tournamentRoutes = require('./routes/tournamentRoutes');
+
 // Online connection
 const { Server } = require("socket.io");
 const http = require("http");
@@ -32,25 +35,21 @@ const io = new Server(server, {
         methods: ["GET", "POST"],
     },
 });
-// //
-// // Connect to MongoDB
-// connectDB(process.env.MONGO_URI);
-// Initialize Firebase Admin SDK in server.js
-
 
 // Middleware
 app.use(cookieParser());
 app.use(express.json());
 
+// ✅ Mount all real API routes first
 app.use('/api/users', require("./models/users"));
 app.use('/api/friends', friendRoutes);
-// // Routes
-// app.use('/api/auth', authRoutes);
-//
-// // Example protected route
-// app.get('/api/protected', requireAuth, (req, res) => {
-//     res.status(200).json({ message: 'You have accessed a protected route!', userId: req.userId });
-// });
+app.use('/api/auth', authRoutes);
+app.use('/api/tournaments', tournamentRoutes);
+
+// ✅ Fallback must come LAST
+app.use('/api', (req, res) => {
+    res.status(404).json({ message: 'API endpoint not found' });
+});
 
 
 // =======================
@@ -60,23 +59,19 @@ const gameNamespace = io.of("/chess");
 gameNamespace.on('connection', (socket) => {
     console.log('[CHESS] Connected:', socket.id);
 
-    // Initial handlers
     handleRoomJoin(socket, io, rooms);
     handleRankedQueue(socket, io, rooms);
 
-    // 🔁 Move sync
     socket.on('move', ({ room, from, to, promotion }) => {
         console.log(`[MOVE] ${socket.id} moved from ${from} to ${to} in room ${room}`);
         socket.to(room).emit('move', { from, to, promotion });
     });
 
-    // 🏁 Game over broadcast
     socket.on('game-over', ({ room, winner }) => {
         console.log(`[GAME OVER] ${room}: Winner is ${winner}`);
         socket.to(room).emit('game-over', { winner });
     });
 
-    // 💥 Opponent left
     socket.on('disconnecting', () => {
         for (const room of socket.rooms) {
             if (room !== socket.id && rooms[room]) {
@@ -118,28 +113,6 @@ chatNamespace.on("connection", (socket) => {
 
     socket.on("disconnect", () => {
         console.log("[CHAT] User disconnected:", socket.id);
-    });
-});
-
-const onlineUsers = new Map(); // socket.id -> username
-
-io.on("connection", (socket) => {
-    socket.on("register_user", async (userId) => {
-        onlineUsers.set(socket.id, userId);
-
-        // Get this user's friends from Mongo
-        const user = await User.findById(userId).populate("friends", "username");
-        if (!user) return;
-
-        const onlineFriendNames = user.friends
-            .filter((friend) => [...onlineUsers.values()].includes(friend._id.toString()))
-            .map((friend) => friend.username);
-
-        socket.emit("online_friends", onlineFriendNames);
-    });
-
-    socket.on("disconnect", () => {
-        onlineUsers.delete(socket.id);
     });
 });
 
