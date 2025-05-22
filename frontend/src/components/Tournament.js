@@ -1,41 +1,64 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { auth } from '../config/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 
 function Tournament() {
     const navigate = useNavigate();
+    const [pairing, setPairing] = useState(null);
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    const tournaments = [
-        { id: 1, name: 'Spring Open', date: '2025-05-10', location: 'Online' },
-        { id: 2, name: 'Summer Classic', date: '2025-07-01', location: 'New York' },
-        { id: 3, name: 'Fall Invitational', date: '2025-09-15', location: 'Online' },
-    ];
+    const tournamentId = "spring_open"; // adjust dynamically later
 
-    const handleTournamentClick = (id) => {
-        navigate(`/tournamentsignup/${id}`);
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                try {
+                    const res = await fetch(`http://localhost:5001/api/tournaments/pairings/${tournamentId}/${user.uid}`);
+                    const data = await res.json();
+
+                    if (!res.ok) throw new Error(data.message);
+
+                    setPairing(data);
+                } catch (err) {
+                    console.error(err);
+                    setError(err.message);
+                }
+            } else {
+                setError("User not logged in.");
+            }
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    const joinGame = () => {
+        if (pairing?.gameRoomId) {
+            navigate(`/chess?room=${pairing.gameRoomId}`);
+        }
     };
 
+    if (loading) return <p className="text-white p-4">Loading...</p>;
+    if (error) return <p className="text-red-500 p-4">Error: {error}</p>;
+    if (!pairing) return <p className="text-white p-4">No pairing found.</p>;
+
     return (
-        <div style={{ maxWidth: '600px', margin: 'auto', padding: '1rem' }}>
-            <h2>Upcoming Chess Tournaments</h2>
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-                {tournaments.map((tournament) => (
-                    <li
-                        key={tournament.id}
-                        onClick={() => handleTournamentClick(tournament.id)}
-                        style={{
-                            marginBottom: '15px',
-                            padding: '10px',
-                            border: '1px solid gray',
-                            borderRadius: '8px',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        <strong>{tournament.name}</strong><br />
-                        Date: {tournament.date}<br />
-                        Location: {tournament.location}
-                    </li>
-                ))}
-            </ul>
+        <div className="p-6 bg-gray-800 text-white">
+            <h3 className="text-2xl font-semibold mb-4">Your Tournament Matchup</h3>
+            <p className="mb-2">
+                Opponent UID:{" "}
+                {pairing.player1Uid === auth.currentUser.uid
+                    ? pairing.player2Uid
+                    : pairing.player1Uid}
+            </p>
+            <button
+                onClick={joinGame}
+                className="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-400 rounded"
+            >
+                Join Match
+            </button>
         </div>
     );
 }
