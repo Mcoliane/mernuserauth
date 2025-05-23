@@ -37,13 +37,20 @@ _Or,_ if you are using IntelliJ:
 
 
 Create a .env file in the backend folder with the following variables:
+If you so choose, you don't need to specify the PORT in the .env file, it will default to port 5001,
 
 _Note: Replace the strings {...} with your environment variables. Ex. PORT=5000_
 ```env
 PORT={PORT}
-MONGO_URI={mongodb_url}
-JWT_SECRET={secret_key}
 ```
+
+For this application, we used firebase. You will need to visit [Firebase](https://firebase.google.com/), at the top right 
+open Go to console and create an account. You will then need retrieve the necessary files for firebase.js (Build > Authentication)
+, firebaseAdmin.js (Build > Realtime Database), and serviceAccountKey.json (Build > Realtime Database). 
+
+- `firebase.js` should be created under frontend > src > config 
+- `firebaseAdmin.js` should be created under backend > config 
+- `serviceAccountKey.json` should be added to the backend folder
 
 Next, open two terminals in your IDE of choice (We used IntelliJ and Visual Studio Code).
 
@@ -54,7 +61,7 @@ In one of the terminal windows:
 >
 > npm start
 
-The terminal should display that the Server is listening on the port specified in the .env file and that the database 
+The terminal should display that the Server is listening on the port specified in the .env file or the default port (5001) and that the database 
 has connected.
 
 Then, in the second terminal window:
@@ -65,7 +72,7 @@ Then, in the second terminal window:
 >
 > npm start
 
-A new browser window should open. If not, follow the link in the terminal (Example: https://localhost:3001/)
+A new browser window should open. If not, follow the link in the terminal (Example: https://localhost:3000/)
 
 ---
 
