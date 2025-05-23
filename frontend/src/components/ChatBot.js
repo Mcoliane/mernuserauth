@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import EmojiPicker from "emoji-picker-react";
 import CryptoJS from "crypto-js";
 
-const SECRET_KEY = "your_shared_secret_key";
+const SECRET_KEY = process.env.REACT_APP_SECRET_KEY || "fallback_secret_key";
 
 const encryptMessage = (text) => {
   return CryptoJS.AES.encrypt(text, SECRET_KEY).toString();
@@ -26,7 +26,34 @@ export default function Chat() {
 
   const username = useRef(`User${Math.floor(Math.random() * 1000)}`).current;
 
-  // ✅ Connect to socket server once
+  // 🔁 Load chat history from Firebase
+  useEffect(() => {
+    const loadMessages = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.REACT_APP_FIREBASE_DB_URL}/chat/messages.json`
+        );
+        const data = await res.json();
+        if (!data) return;
+
+        const history = Object.values(data).map((msg) => ({
+          ...msg,
+          time: new Date(msg.timestamp).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        }));
+
+        setChat(history);
+      } catch (err) {
+        console.error("Failed to load messages:", err);
+      }
+    };
+
+    loadMessages();
+  }, []);
+
+  // ✅ Connect to socket server
   useEffect(() => {
     const newSocket = io(`${process.env.REACT_APP_SOCKET_URL}/chat`, {
       transports: ["websocket"],

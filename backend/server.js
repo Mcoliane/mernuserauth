@@ -18,8 +18,8 @@ const { rooms } = require("./sockets/rooms");
 // ✅ Firebase Admin connection
 const { db } = require("./config/firebaseAdmin");
 
-// 🔒 Secret key for encryption (TODO: move to .env in prod)
-const SECRET_KEY = "your_shared_secret_key";
+// 🔒 Load from environment
+const SECRET_KEY = process.env.SECRET_KEY || "fallback_secret_key";
 
 // ✅ Connect to MongoDB
 connectDB(process.env.MONGO_URI);
@@ -44,14 +44,15 @@ app.use("/api/auth", authRoutes);
 app.use("/api/friends", friendRoutes);
 app.use("/api/tournaments", tournamentRoutes);
 
-// ❌ DO NOT mount models as routes
-// app.use("/api/users", require("./models/users")); ← This is bad
-// If you need a real `/api/users` route, make a new `routes/users.js` file
+// ❌ Do NOT mount model files as routes (e.g., `./models/users`)
+//
+// ✅ TODO: If needed, create /routes/users.js with real Express logic
 
 // ✅ Fallback for unknown API routes
 app.use("/api", (req, res) => {
   res.status(404).json({ message: "API endpoint not found" });
 });
+
 
 // =======================
 // ♟️ GAME SOCKET NAMESPACE
@@ -94,9 +95,21 @@ const chatNamespace = io.of("/chat");
 chatNamespace.on("connection", (socket) => {
   console.log("[CHAT] Connected:", socket.id);
 
-  socket.on("send_message", (data) => {
+  socket.on("send_message", async (data) => {
     const decrypted = decryptMessage(data.text);
     console.log(`[Chat] ${data.user}: ${decrypted}`);
+
+    // ✅ Save message to Firebase Realtime DB
+    try {
+      await db.ref("chat/messages").push({
+        user: data.user,
+        text: decrypted,
+        timestamp: Date.now(),
+      });
+    } catch (err) {
+      console.error("Failed to save chat message:", err);
+    }
+
     chatNamespace.emit("receive_message", data);
   });
 
@@ -123,4 +136,4 @@ const encryptMessage = (plainText) => {
 // 🚀 START SERVER
 // =======================
 const PORT = process.env.PORT || 5001;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
