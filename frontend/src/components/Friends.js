@@ -49,7 +49,7 @@ function FriendsComponent() {
         });
 
         return () => unsubscribe(); // clean up listener on unmount
-    }, [userUid]);
+    }, [userUid, db]);
 
     useEffect(() => {
         const unsubscribe = getAuth().onAuthStateChanged((user) => {

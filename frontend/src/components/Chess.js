@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useRef} from "react";
-import {useLocation, useNavigate} from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 import ChessGameMode from "./ChessGameMode";
 import RulesPopup from "./RulesPopup";
 import OnlineGameMode from "./OnlineGameMode";

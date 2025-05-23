@@ -6,15 +6,6 @@ function Footer() {
                     © 2025 <span className="font-semibold text-white">Chess++</span>. All rights reserved.
                 </p>
 
-                {/* Socials or quick links */}
-                <div className="mt-4 md:mt-0 flex space-x-4">
-                    <a href="#" className="text-gray-400 hover:text-white transition">
-                        Privacy Policy
-                    </a>
-                    <a href="#" className="text-gray-400 hover:text-white transition">
-                        Terms
-                    </a>
-                </div>
             </div>
         </footer>);
 }

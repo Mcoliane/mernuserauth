@@ -34,7 +34,7 @@ const avatarMap = {
 export default function NavComp() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [user, setUser] = useState(null);
-    const [avatar, setAvatar] = useState(null);
+    const [setAvatar] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
