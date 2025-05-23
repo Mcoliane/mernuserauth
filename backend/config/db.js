@@ -1,14 +1,21 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const connectDB = async (MONGO_URI) => {
+const connectDB = async (uri) => {
+  const mongoUri = uri || process.env.MONGO_URI || process.env.MONGO_URL;
+
+  if (!mongoUri) {
+    console.error("❌ No MongoDB URI found in environment variables.");
+    process.exit(1);
+  }
+
   try {
-    await mongoose.connect(MONGO_URI, {
+    await mongoose.connect(mongoUri, {
       useNewUrlParser: true,
-      useUnifiedTopology: true
+      useUnifiedTopology: true,
     });
-    console.log('MongoDB connected');
+    console.log("✅ MongoDB connected");
   } catch (err) {
-    console.error(err.message);
+    console.error("❌ MongoDB connection failed:", err.message);
     process.exit(1);
   }
 };
