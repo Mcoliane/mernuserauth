@@ -1,8 +1,12 @@
 const admin = require("firebase-admin");
 
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+const base64 = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+if (!base64) throw new Error("FIREBASE_SERVICE_ACCOUNT_KEY is missing");
 
-// Safe, conditional initialization
+const serviceAccount = JSON.parse(
+  Buffer.from(base64, "base64").toString("utf-8")
+);
+
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
@@ -10,7 +14,6 @@ if (!admin.apps.length) {
   });
 }
 
-// Export the initialized services
 const db = admin.database();
 const auth = admin.auth();
 
