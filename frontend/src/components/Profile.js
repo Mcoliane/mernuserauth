@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from "../config/firebase";
-import { onAuthStateChanged, updatePassword, signOut, updateProfile } from "firebase/auth";
+import { onAuthStateChanged, updatePassword, signOut } from "firebase/auth";
 
 import {getDatabase, onValue, ref, update} from "firebase/database";
 import {
-    Tabs, Tab, Input, Button, Avatar, Divider, Form
+    Tabs, Tab, Input, Button, Divider, Form
 } from '@heroui/react';
 import avatar1 from './avatars/avatar1.png';
 import avatar2 from './avatars/avatar2.png';
