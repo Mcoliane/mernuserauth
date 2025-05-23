@@ -26,7 +26,7 @@ function TournamentList() {
     if (error) return <p className="text-red-500 p-4">{error}</p>;
 
     return (
-        <div className="p-6 text-white">
+        <div className="p-6 text-gray-400">
             <h2 className="text-3xl font-bold mb-4">Available Tournaments</h2>
 
             {tournaments.length === 0 ? (
